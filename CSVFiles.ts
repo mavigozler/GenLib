@@ -56,7 +56,6 @@ character has been inserted before the hyphen character.`;
 
 let ExcelTableColumnWidthStyling = "<Column ss:Width=\"${columnWidth}\"/>";
 
-export
 class CSVFiles {
    private CSVrowedFields: string[][] = [];
    private rowedCSVoutput: string[] = [];
