@@ -29,7 +29,6 @@ enum MathOperation {
 
 type CssValueDim = { val: number, dim: string };
 
-export
 class iCss {
 
 	CssValue = /(\d+)|(\d*\.\d+)|(\d+%)|(\d*\.\d+%)(em|px|cm|in|mm|pt|pc|ex)/;

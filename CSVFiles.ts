@@ -1,6 +1,5 @@
 ﻿"use strict";
 
-export
 type THeaderObjPropsColumns = {
    header: string;
    objprop: string;
@@ -8,7 +7,6 @@ type THeaderObjPropsColumns = {
    xmlInfo?: TXmlColumnFormatting;
 };
 
-export
 type TXmlColumnFormatting = {
    fontWeight?: "normal" | "bold";
    color?: number | string;
