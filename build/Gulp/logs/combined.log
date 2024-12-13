@@ -1,0 +1,199 @@
+[object Object][undefined] info: `process.env.NODE_ENV` is not defined
+[object Object][undefined] info: `process.env.NODE_ENV` is not defined
+[object Object][undefined] info: 
+  ====== System Detail ======
+  Current working directory: C:\Program Files\nodejs\node_modules\gulp-cli\bin
+  Gulp version: 5.0.0
+  Gulp args:  'C:\Program Files\nodejs\node.exe', 'C:\Program Files\nodejs\node_modules\gulp-cli\bin\gulp.js', '--gulpfile', './build/Gulp/run/build/Gulp/src/gulpfile.js', '-c', 'D:\dev\_Projects\SPAdminTool/build/Gulp/config/gulpfile.config.json', '-t', 'browser', '-s', 'release'
+  Selected Gulp config:
+     task = 'browser'
+    stage = 'release'
+
+  ===========================
+[object Object][undefined] info: preclean: all items actually irretrievably deleted
+[object Object][undefined] info: [
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpfile.js",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpfile.js.map",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpfile.ts",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpfileGlobals.js",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpfileGlobals.js.map",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpfileGlobals.ts",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpTesting.js",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpTesting.js.map",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\gulpTesting.ts",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\postbuild-operations.js",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\postbuild-operations.js.map",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\postbuild-operations.ts",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\resolveImports.js",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\resolveImports.js.map",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\resolveImports.ts",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\scriptFileBuilding.js",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\scriptFileBuilding.js.map",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\scriptFileBuilding.ts",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\webpack.config.js",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\webpack.config.js.map",
+  "D:\\dev\\_Templates\\Gulp Template\\build\\Gulp\\lib\\webpack.config.ts"
+]
+[object Object][undefined] info: JSON.stringify(TSProject.config):
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "ES6",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "types": [
+      "node",
+      "inquirer"
+    ],
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "outDir": "lib",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/*.ts"
+  ],
+  "exclude": [
+    "src/gulp-filelistexmem.ts"
+  ],
+  "compileOnSave": false
+}
+[object Object][undefined] info: Here are the list of dependencies added to the TSProject object
+[object Object][undefined] info: running TScompile()
+  Overriding options--
+  gulpconfig-outdir undefined overrides: 'undefined'
+  tsconfig-outDir   = 'lib'
+  gulpconfig-outDir = 'not defined'
+  final-outDir = 'lib'
+  tsconfig-sourceMap   = 'true'
+  gulpconfig-soureMap = 'undefined'
+  final-sourceMap = 'true'
+[object Object][undefined] info: files to be compiled:
+[object Object][undefined] info: JSON.stringify(TSProject.config):
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "ES6",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "types": [
+      "node",
+      "inquirer"
+    ],
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "outDir": "lib",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/*.ts"
+  ],
+  "exclude": [
+    "src/gulp-filelistexmem.ts"
+  ],
+  "compileOnSave": false
+}
+[object Object][undefined] info: `process.env.NODE_ENV` is not defined
+[object Object][undefined] info: `process.env.NODE_ENV` is not defined
+[object Object][undefined] info: `process.env.NODE_ENV` is defined: development
+[object Object][undefined] info: `process.env.NODE_ENV` is defined: development
+[object Object][undefined] info: `process.env.NODE_ENV` is defined: development
+[object Object][undefined] info: 
+  ====== System Detail ======
+  Current working directory: D:\dev\_Projects\SPAdminTool\node_modules\gulp\bin
+  Gulp version: 5.0.0
+  Gulp args:  'C:\Program Files\nodejs\node.exe', 'D:\dev\_Projects\SPAdminTool\node_modules\gulp\bin\gulp.js', '--gulpfile', 'D:\dev\_Projects\SPAdminTool/build/Gulp/run/build/Gulp/src/gulpfile.js', '-c', 'D:\dev\_Projects\SPAdminTool/build/Gulp/config/gulpfile.config.json', '-t', 'browser', '-s', 'release'
+  Selected Gulp config:
+     task = 'browser'
+    stage = 'release'
+
+  ===========================
+[object Object][undefined] info: preclean: all items actually irretrievably deleted
+[object Object][undefined] info: []
+[object Object][undefined] info: JSON.stringify(TSProject.config):
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "ES6",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "types": [
+      "node",
+      "inquirer"
+    ],
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "outDir": "lib",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/*.ts"
+  ],
+  "exclude": [
+    "src/gulp-filelistexmem.ts"
+  ],
+  "compileOnSave": false
+}
+[object Object][undefined] info: Here are the list of dependencies added to the TSProject object
+[object Object][undefined] info: running TScompile()
+  Overriding options--
+  gulpconfig-outdir undefined overrides: 'undefined'
+  tsconfig-outDir   = 'lib'
+  gulpconfig-outDir = 'not defined'
+  final-outDir = 'lib'
+  tsconfig-sourceMap   = 'true'
+  gulpconfig-soureMap = 'undefined'
+  final-sourceMap = 'true'
+[object Object][undefined] info: files to be compiled:
+[object Object][undefined] info: JSON.stringify(TSProject.config):
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "ES6",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "types": [
+      "node",
+      "inquirer"
+    ],
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "outDir": "lib",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/*.ts"
+  ],
+  "exclude": [
+    "src/gulp-filelistexmem.ts"
+  ],
+  "compileOnSave": false
+}

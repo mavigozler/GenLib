@@ -1,0 +1,396 @@
+﻿{
+	"configNames": [ // format also for InquirerChoice type of Node module 'inquirer'
+		{ "name": "browser", "value": "browser",
+			"description": "building interface for the browser", "disabled": false, "short": "" },
+		{ "name": "node", "value": "node",
+			"description": "building interface for Node", "disabled": false, "short": "" }
+	],
+	"default": {
+		"task": "browser",
+		"stage": "release"
+	},
+	"base": {
+		"ProjectRootPath": "D:/dev/_Projects/SPAdminTool",
+		"GulpRootPath": "${ProjectRootPath}/build/Gulp",
+		"SPbrowserPath": "${ProjectRootPath}/SPbrowser",
+		"NodeClientPath": "${ProjectRootPath}/nodeJSclient",
+		"LogsPath": "${ProjectRootPath}/logs",
+		"ProjectSourcesPath": "${ProjectRootPath}/src",
+		"LibsSourcesPath": "${ProjectRootPath}/srclibs"
+	},
+	"configs": [{
+		"browser": {
+			"test": {
+				"stageDescription": "The 'test' stage is for development",
+				"preclean":  {
+					"patterns": [ 	"${ProjectRootPath}/lib/*",	"${ProjectRootPath}/html/*.html" ],
+					"options": { "force": true , "dryRun": false  }
+				},
+				"tsconfig": {
+					"path": null,  // will go to tsconfig.json, "" = dont use tsconfig.json
+					"compilerOptionsOverrides": {
+						"outDir": "${ProjectRootPath}/lib",
+						"sourceMap": true
+					}
+				},
+				"html": {
+					"templateTransform": [
+						{ "from": "${HTML_TEMPLATES}/SPListingTemplate.html",
+						  "to": "${HTML}/SPListing.html" }
+					],
+					"subfolderPaths": {
+						"JSsubDir": "../js",
+						"CSS": "../css",
+						"HTML": "${ProjectRootPath}/html",
+						"HTML_TEMPLATES": "${ProjectRootPath}/html/Templates",
+						"SPREST": "/SPREST",
+						"GenLib": "/GenLib"
+					},
+					"links": [  // use '<!-- $${LINK ELEMENTS} -->' in HTML Template
+						// something like "${CSS}/<name-of-CSS-fileÇ.css",
+						"${CSS}/elements.css",
+						"${CSS}/listing.css"
+					],
+					"scripts": {  // use '<!-- $${SCRIPT ELEMENTS} -->' in HTML Template'
+						"special": [
+						//	{	"src": "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js",
+						//		"integrity": "sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6",
+						//		"crossorigin": "anonymous" },
+						//	"https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.2/bootbox.min.js",
+				//			"https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js",
+					//		"https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuidv4.min.js",
+					//		"https://cdn.jsdelivr.net/npm/glob@10.3.10/dist/commonjs/ignore.min.js"
+							//"https://cdn.jsdelivr.net/npm/fs-extra@11.2.0/lib/index.min.js"
+							// "//cdn.jsdelivr.net/npm/bluebird@3.7.2/js/browser/bluebird.js"
+							// Making DOCX files with JSZIP and DOCX
+							// "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
+							// "https://cdnjs.cloudflare.com/ajax/libs/docx/4.4.1/docx.browser.min.js"
+						],
+						"module": {
+							// format: "%%<string>%%" match a substring in from than map
+							"tsconfigPathMaps": [
+							//	{ "default": "./${JSsubDir}" },
+								{ "from": "%%js%%", "to":"${JSsubDir}", "typemodule": false,
+									"flatten": false, 	"except": [ "nobrowser.js" ] ,
+									"filesCopyTo": "${ProjectRootPath}/js" }
+							]
+						}
+					},
+					"replace": [],
+					"add": [],
+					"del": []
+				},
+				"copy": [
+					{ "bypass": true }
+
+				],
+				"moveRename": [
+					///{ "bypass": true }
+					///["${ProjectRootPath}/lib/index.js.map", "${ProjectRootPath}/test/index.js.map"
+			//		["${ProjectRootPath}/html/SPListing.html", "${ProjectRootPath}/html/SPListing.aspx"],
+			//		["${ProjectRootPath}/lib/**/{*.js,*.js.map}", "${ProjectRootPath}/js"]
+				],
+				"edits": [ // if "^" insert at start, if "$" append replace
+					/// { "bypass": true }
+					/*
+					{
+						"filepath": "${SPbrowserPath}/js/ListingMain.js",
+						"fixes": [
+							{ "target": "\"@@ConfigJsonFilePath@@\"", //"flags": "gm",
+							"replace": "location.href.substring(0, location.href.lastIndexOf(\"/\") + 1) + \"js/config.json\""	}
+						]
+					} */
+				],
+				"webpack": {
+					// JS file that is the entry point
+					"entryJS": "${ProjectRootPath}/${JSsubDir}/SPListingjs",
+					// where the bundled JS file will go
+					"dest": "${ProjectRootPath}/${JSsubDir}",
+					// should be globbed string pointing to JS files to be bundled
+					"src": "",
+					// path to webpack.config.js
+					"configJSpath": "",
+					// name for bundled JS file
+					"bundleName": ""
+				},
+				"finish": {
+					"markReadOnly": [],
+					"delete": []
+				 /* [{
+					"path": "./js",
+					"filter": "^(?:(?!\\.js$|\\.js\\.map$|\\.tsbuildinfo$).)*$",
+					"recursive": true,
+					"preview": true
+				}] */
+	//			"flags": [ "--verbose", "--force" ]
+				}
+			},
+	/***** release STAGE ********/
+			"release": {
+				"stageDescription": "The 'release' stage is for debugged apps ready for production",
+				"preclean": {
+					"patterns": [ "${SPbrowserPath}/*", "${ProjectRootPath}/${JSsubDir}/*",
+							"${HTML}/*.html" ],
+					"options": { "force": true , "dryRun": false  }
+				},
+				"tsconfig": {
+					"path": null,  // null = default to root folder 'tsconfig.json'
+					"compilerOptionsOverrides": {
+						/// https://www.npmjs.com/package/gulp-typescript
+						"outDir": "undefined",
+						"thisUndefinedOutDirOverrides": false,
+						"sourceMap": true,
+						"rootDir": null
+							// Specifies the root directory of input files. Only use to control the output
+							//   directory structure with outDir.
+					}
+				},
+				"html": {
+					"templateTransform": [
+						{ "from": "${HTML_TEMPLATES}/SPListingTemplate.html",
+						  "to": "${HTML}/SPListing.html" }
+					],
+					"subfolderPaths": {
+						"JSsubDir": "./js",
+						"CSS": "./css",
+						"HTML": "${ProjectRootPath}/html",
+						"HTML_TEMPLATES": "${ProjectRootPath}/html/Templates",
+						"HTML_REALPATH": "${ProjectRootPath}/html"
+					},
+					"links": [
+						{ "rel":"stylesheet",
+						"href": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
+						"integrity": "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN",
+						"crossorigin": "anonymous" },
+						"${CSS}/elements.css",
+						"${CSS}/listing.css"
+						//{
+						//	"rel": "stylesheet",
+						//	"href": "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css",
+						//	"integrity": "sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh",
+						//	"crossorigin": "anonymous"
+						//}
+					],
+					"scripts": {
+						"special": [
+							{ "src": "https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js" },
+							{	"src": "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js",
+								"integrity": "sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6",
+								"crossorigin": "anonymous"},
+							{ "src": "https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.3/bootbox.min.js",
+									"integrity": "sha512-U3Q2T60uOxOgtAmm9VEtC3SKGt9ucRbvZ+U3ac/wtvNC+K21Id2dNHzRUC7Z4Rs6dzqgXKr+pCRxx5CyOsnUzg==",
+									"crossorigin": "anonymous", "referrerpolicy": "no-referrer" }
+						],
+						"module": {
+							// format: "%%<string>%%" match a substring in from than map
+							"tsconfigPathMaps": [
+								//	{ "default": "./${JSsubDir}" },
+									{ "from": "%%js%%", "to":"${JSsubDir}", "typemodule": false,
+										"flatten": false, 	"except": [ "nobrowser.js" ] ,
+										"filesCopyTo": "${SPbrowserPath}/js"
+									}
+								]
+						}
+					},
+					"replace": [],
+					"add": [],
+					"del": []
+				},
+				"copy": [
+					{ "bypass": false },
+					{ "from": [
+							"${HTML}/SPListing.html"
+						],
+						"to": "${SPbrowserPath}"
+					},
+					{
+						"from": [ "${ProjectRootPath}/css/*.css" ],
+						"to": "${SPbrowserPath}/css"
+					},
+					{ "from": [
+						"${ProjectRootPath}/config/config.json"
+						],
+						"to": "${SPbrowserPath}/js"
+					},
+					{ "from": [
+						"${ProjectRootPath}/img/gear-icon-2048x2048-5lk2g86a.png"
+						],
+					"to": "${SPbrowserPath}/img"
+					}
+			],
+				"moveRename": // $$TSCONFIGFIILES, $$TSCONFIGINCLUDE
+				[
+					["${SPbrowserPath}/SPListing.html", "${SPbrowserPath}/SPListing.aspx"]
+	//				["${ProjectRootPath}/lib/**/{*.js,*.js.map}", "${SPbrowserPath}/js"]
+	//				["${SPbrowserPath}/js/postbuild*", "${ProjectRootPath}/build/Gulp/run"]
+				],
+				"edits": [ // if "^" insert at start, if "$" append replace
+				/*
+					{
+						"filepath": "${SPbrowserPath}/js/ListingMain.js",
+						"fixes": [
+							{ "target": "\"@@ConfigJsonFilePath@@\"", //"flags": "gm",
+							"replace": "location.href.substring(0, location.href.lastIndexOf(\"/\") + 1) + \"js/config.json\""	}
+						]
+					}
+	/*				{
+						"filepath": "${SPbrowserPath}/js/SPREST/SPHttpReqResp.js",
+						"fixes": [
+							{ "target": "${exportCut}", //"flags": "gm",
+							"replace":	"\n\n"	}
+						]
+					},
+					{
+						"filepath": "${SPbrowserPath}/js/test.js",
+						"fixes": [
+							{ "target": "${exportCut}", //"flags": "gm",
+							"replace": "\n\n"	}
+						]
+					} */
+
+				],
+				"webpack": {
+					// JS file that is the entry point
+					"entryJS": "${SPbrowserPath}/js/ListingMain.js",
+					// where the bundled JS file will go
+					"dest": "${SPbrowserPath}/js",
+					// should be globbed string pointing to JS files to be bundled
+					"src": "${SPbrowserPath}/js/**/*.js",
+					// path to webpack.config.js
+					"configJSpath": "${ProjectRootPath}/webpack.config.js",
+					// name for bundled JS file
+					"bundleName": "bundle.js"
+				},
+				"finish": {
+					"markReadOnly": ["${SPbrowserPath}/**/*.ts", "${SPbrowserPath}/**/*.css", "${SPbrowserPath}/**/*.aspx"]
+					/*{
+						"id": "clean JS/JSMAP/tsbuildinfo",
+						"path": "",
+						"filter": "^(?:(?!\\.js$|\\.js\\.map$|\\.tsbuildinfo$).)*$",
+						"recursive": true,
+						"preview": true
+					}
+					{
+						"id": "delete files/folders in 'build/Gulp/run'",
+						"path": "${ProjectRootPath}/build/Gulp/run",
+						"filter": "^(?:(?!\\.js$|\\.js\\.map$|\\.tsbuildinfo$).)*$",
+						"recursive": true,
+						"preview": true
+					} */
+				}
+				//	"flags": [ "--verbose", "--force" ]
+			}
+		},
+		"node": {
+			"build": {
+				"stageDescription": "The 'build' stage is used for development with Node",
+				"preclean": {
+					"patterns": [ "${ProjectRootPath}/js/**/*", "${ProjectRootPath}/lib/**/*",
+							"${ProjectRootPath}/html/*Node*.html" ],
+					"options": { "force": true }
+				},
+				"tsconfig": {
+					"path": "tsconfig.node.json",  // will go to tsconfig.json, "" = dont use tsconfig.json
+					"compilerOptions": {
+						"outDir": "${ProjectRootPath}/lib",
+						"sourceMap": true
+					}
+				},
+				"html": {
+					"templateTransform": [
+						{ "from": "${HTML_TEMPLATES}/SPListingTemplate.html",
+						  "to": "${HTML}/SPListing4Node.html" }
+					],
+					"subfolderPaths": {
+						"JSsubDir": "../js",
+						"CSS": "../css",
+						"HTML": "${ProjectRootPath}/html",
+						"HTML_TEMPLATES": "${ProjectRootPath}/html/Templates",
+						"TEST": "../test"
+					},
+					"links": [
+						"${CSS}/elements.css",
+						"${CSS}/listing.css"
+						//{
+						//	"rel": "stylesheet",
+						//	"href": "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css",
+						//	"integrity": "sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh",
+						//	"crossorigin": "anonymous"
+						//}
+					],
+					"scripts": {
+						"special": [
+							/*{
+								"src": "https://code.jquery.com/jquery-3.6.0.min.js",
+								"integrity": "sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=",
+								"crossorigin": "anonymous"
+							} */
+						],
+						"module": {
+							// format: "%%<string>%%" match a substring in from than map
+							"tsconfigPathMaps": [
+							//	{ "default": "./${JSsubDir}" },
+								{ "from": "%%js%%", "to":"${JSsubDir}", "typemodule": false
+									, "flatten": false
+									//, "except": [ "nobrowser.js" ]
+								}
+							]
+						}
+					},
+					"replace": [],
+					"add": [],
+					"del": []
+				},
+				"copy": [
+				 /* ,
+					{ "from": [
+						"${ProjectRootPath}/SPbrowserPath/** /*.{js,js.map}"
+
+						],
+						"to": "${ProjectRootPath}/js/node"
+					}*/
+				],
+				"moveRename": [
+					//["${ProjectRootPath}/lib/index.js.map", "${ProjectRootPath}/test/index.js.map"]
+				],
+				"edits": [ // if "^" insert at start, if "$" append replace
+					{
+						"filepath": "${ProjectRootPath}/js/node/EventHandlers.js",
+						"fixes": [
+							{ "target": "\"use strict\";\n",
+							"replace":
+								["\"use strict\";\n\nimport { sendRequest, setupMethod, formatDate, hideHeaderSet,",
+									" showHeaderSet, setupXDigest, deleteHeader, fillPrevious,",
+									" addHeader, loadPreviousData } from \"./SPListing.js\";\n\n" ]
+							}
+						]
+					}
+				],
+				"webpack": {
+					// JS file that is the entry point
+					"entryJS": "${ProjectRootPath}/${JSsubDir}/SPListingjs",
+					// where the bundled JS file will go
+					"dest": "${ProjectRootPath}/${JSsubDir}",
+					// should be globbed string pointing to JS files to be bundled
+					"src": "",
+					// path to webpack.config.js
+					"configJSpath": "",
+					// name for bundled JS file
+					"bundleName": ""
+				},
+				"finish": {
+					"markReadOnly": [],
+					"delete": [
+						{
+							"id": "delete files/folders in 'build/Gulp/run'",
+							"path": "${ProjectRootPath}/build/Gulp/run",
+							"filter": "^(?:(?!\\.js$|\\.js\\.map$|\\.tsbuildinfo$).)*$",
+							"recursive": true,
+							"preview": true
+						}
+					]
+				}
+			}
+		}
+	}]
+}
