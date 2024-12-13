@@ -4,11 +4,50 @@
 		{
 			"type": "typescript",
 			"tsconfig": "./tsconfig.json",
-			"problemMatcher": [
-				"$tsc"
-			],
+			"problemMatcher": [ "$tsc" ],
 			"group": "build",
-			"label": "tsc: build - _GenLib/tsconfig.json"
+			"label": "tsc: build - GenLib"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "./tsconfig.smalltest.json",
+			"problemMatcher": [ "$tsc" ],
+			"group": "build",
+			"label": "tsc: test.ts in ./test"
+		},
+		{  // Gulp file
+			"type": "typescript",
+			"tsconfig": "./tsconfig.gulpfile.json",
+			"label": "Compile Gulpfile.ts",
+			"problemMatcher": [ "$tsc" ]
+		},
+		{  // JSON extended tool tsconfig
+			"type": "typescript",
+			"tsconfig": "./tsconfig.JSONextended.json",
+			"label": "Compile JSONextended.ts",
+			"problemMatcher": [ "$tsc" ],
+		},
+		{
+			"type": "shell",
+			"label": "TSC compile this file",
+			"command": "tsc --sourcemap ${fileBasename}",
+			"problemMatcher": [ "$tsc" ]
+		},
+		{
+			"type": "shell",
+			"label": "Modify JS with ESLintDisable.JS",
+			"command": "node",
+			"args": ["${workspaceFolder}/build/eslint-disable.js", "${workspaceFolder}/gulpfile.js" ],
+			"problemMatcher": [ "$tsc" ]
+		},
+		{
+			"label": "Build Gulpfile.JS",
+			"dependsOrder": "sequence",
+			"dependsOn": ["Compile Gulpfile.ts", "Modify JS with ESLintDisable.JS"],
+			"group": {
+			  "kind": "build",
+			  "isDefault": true
+			}
 		}
 	]
 }

@@ -1,3 +1,11 @@
+"use strict";
+
+import { areEqual } from "./numberExtended.js";
+export {
+	CssValueDim,
+	MathOperation,
+	iCss  // class
+};
 /*debugging;
 cssStyleDeclType = typeof(cssStyleDeclaration);
 if (cssStyleDeclType == "function" || cssStyleDeclType == "object") {
@@ -9,29 +17,16 @@ if (cssStyleDeclType == "function" || cssStyleDeclType == "object") {
 	}
 }*/
 
-
-/**
- * createStyleSheet() creates a style sheet within the DOM
- * @param urlOrRules {String|undefined|null}
-      - url path to a file of type 'css' that specifies an external stylesheet
-			- a long string of one or more valid rules in "selector {propertyName:propertyValue;...} format
-            as one might find in the contained text of a style element
-            the string MUST be stripped of all newlines '\n' characters
-      - if undefined or null, will create an internal stylesheet
- * @returns object reference of type styleSheet in Windows or of type style or link element
- *  if using IE 5 and later for Macintosh
- */
-
 enum MathOperation {
 	CSS_SUM,
-	CSS_MULTIPLY
+	CSS_MULTIPLY,
+	CSS_DIVIDE
 }
 
 type CssValueDim = { val: number, dim: string };
 
 class iCss {
-
-	CssValue = /(\d+)|(\d*\.\d+)|(\d+%)|(\d*\.\d+%)(em|px|cm|in|mm|pt|pc|ex)/;
+	static CssValue = /(\d+)|(\d*\.\d+)|(\d+%)|(\d*\.\d+%)(em|px|cm|in|mm|pt|pc|ex)/;
 	MAX_STRING_CHECK_FOR_COLUMN = 12;
 	//  match[1] = integer/whole, match[2] = flat, match[3]=whole/int percentage
 	//   match[4] = float percentage, match[5] = string dim
@@ -56,32 +51,41 @@ class iCss {
 			if (createIfNull != true)
 				return null;
 			styleElem = doc.createElement("style");
-//			styleElem.type = "text/css";
+			//	styleElem.type = "text/css";
 			doc.head.appendChild(styleElem);
 			return this.getFirstInternalStylesheet(doc, false);
 		}
 		return doc.styleSheets[i];
 	}
 
-   createStyleSheet (
+	/**
+ 	 * createStyleSheet() creates a style sheet within the DOM
+    * @param urlOrRules {String|undefined|null}
+      - url path to a file of type 'css' that specifies an external stylesheet
+			- a long string of one or more valid rules in "selector {propertyName:propertyValue;...} format
+            as one might find in the contained text of a style element
+            the string MUST be stripped of all newlines '\n' characters
+      - if undefined or null, will create an internal stylesheet
+    * @returns object reference of type styleSheet in Windows or of type style or link element
+    *  if using IE 5 and later for Macintosh
+    */
+	createStyleSheet (
 		doc: Document,
-		urlOrRules: any
+		urlOrRules: string | undefined
 	)  {
-		const rulesRE = /([\w\-]?[#\.]?[\w\-]+(\s+[\w\-\*>]+)*)\s*\{([^\}]+)\}/g,
-			ruleRE =  /(.*)\s*\{([^\}]+)\}/;
+		const rulesRE = /([\w-]?[#.]?[\w-]+(\s+[\w\-*>]+)*)\s*\{([^}]+)\}/g,
+			ruleRE =  /(.*)\s*\{([^}]+)\}/,
+			rules = typeof urlOrRules == "string" ? urlOrRules.match(rulesRE) : undefined,
+			allRules = [];
 
-   	let i,
+		let i,
 			returnedValue,
 			styleSheet: CSSStyleSheet | null,
 			linkElem: HTMLLinkElement,
 			styleElem: HTMLStyleElement,
-			rules: RegExpMatchArray | null,
-			rule,
-   		allRules = [];
-
-		if (typeof urlOrRules !== "string")
+			rule;
+		if (!rules)
 			return;
-		rules = urlOrRules.match(rulesRE);
 		/*
 		if (document.createStyleSheet) {
 		if (typeof urlOrRules == "undefined" || urlOrRules == null)
@@ -94,7 +98,6 @@ class iCss {
 		if (typeof urlOrRules == "undefined" || urlOrRules == null) {
 			// an empty internal style sheet is wanted and returned
 			styleElem = doc.createElement("style");
-			styleElem.type = "text/css";
 			styleElem.setAttribute("media", "screen");
 			styleElem.appendChild(doc.createTextNode("")); //WebKit hack
 			doc.head.appendChild(styleElem);
@@ -116,21 +119,19 @@ class iCss {
 		if (styleSheet.insertRule) {
 			for (i = 0; i < allRules.length; i += 2)
 				if ((returnedValue = styleSheet.insertRule(
-						allRules[i] + " { " + allRules[i + 1] + " } ",
-						styleSheet.cssRules.length)) < 0)
+					allRules[i] + " { " + allRules[i + 1] + " } ",
+					styleSheet.cssRules.length)) < 0)
 					throw "styleSheet.insertRule() exception #" + returnedValue;
-	//			else
-	//				console.log("insertRule: " + allRules[i] + " { " + allRules[i + 1] + " } ");
+			//	else
+			//		console.log("insertRule: " + allRules[i] + " { " + allRules[i + 1] + " } ");
 		}
 		else if (styleSheet.addRule) {
 			for (i = 1; i < allRules.length; i += 2)
 				styleSheet.addRule(allRules[i], allRules[i + 1]);
-			//               console.log("addRule: " + allRules[i] +","+ allRules[i + 1] + " } ");
+			//	console.log("addRule: " + allRules[i] +","+ allRules[i + 1] + " } ");
 		}
 		return styleSheet;
 	}
-
-
 
 	/**
 	 * findStyleSheet(hrefPart) returns a CSSStyleSheet object whose name is contained
@@ -140,7 +141,7 @@ class iCss {
 	 */
 	findStyleSheet (
 		hrefPart: string
-	)  {
+	): CSSStyleSheet | null  {
 		if (!document || !document.styleSheets)
 			throw "'document' object or its property 'styleSheets' collection not found";
 		for (let i = 0; i < document.styleSheets.length; i++)
@@ -167,31 +168,32 @@ class iCss {
 			sheet: CSSStyleSheet | null;
 
 		if (typeof selector != "string")
-            throw "a selector parameter of type 'string' is required";
-        if (selector.search(/\s*(\S+)\s*\{.+\}/) >= 0)
-            selector = selector.match(/\s*(\S+)\s*\{.+\}/)![1];
+			throw "a selector parameter of type 'string' is required";
+		if (selector.search(/\s*(\S+)\s*\{.+\}/) >= 0)
+			selector = selector.match(/\s*(\S+)\s*\{.+\}/)![1];
 		if (styleSheet) // search this one
 			rule = searchThisStyleSheet(selector, styleSheet as CSSStyleSheet, false);
 		else //  search all stylesheets
 			for (i = 0; i < document.styleSheets.length; i++) {
 				if (document.styleSheets.item) {
-try {
-					sheet = document.styleSheets.item(i)!;
-} catch (e) {
-					continue;
-}
+					try {
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						sheet = document.styleSheets.item(i)!;
+					} catch {
+						continue;
+					}
 					if ((rule = searchThisStyleSheet(
-							selector,
+						selector,
 							(document.styleSheets as StyleSheetList).item(i)!,
 							true
-						)) != null)
+					)) != null)
 						break;
 				}
 				else if ((rule = searchThisStyleSheet(
-						selector,
-						document.styleSheets[i],
-						false
-					)) != null)
+					selector,
+					document.styleSheets[i],
+					false
+				)) != null)
 					break;
 			}
 		return rule;
@@ -234,7 +236,7 @@ try {
 		selector: string,
 		properties: string,
 		styleSheet: number |  StyleSheet | string
-	)  {
+	): void  {
 	//	if (typeof selector != "string")
 	//		throw "a selector parameter of type 'string' is required";
 	//	if (typeof properties != "string")
@@ -243,8 +245,8 @@ try {
 			if (typeof styleSheet == "number" && document.styleSheets[styleSheet])
 				styleSheet = document.styleSheets[styleSheet];
 			else {
-				let i: number,
-					regex: RegExp = new RegExp(styleSheet as string);
+				const regex: RegExp = new RegExp(styleSheet as string);
+				let i: number;
 
 				for (i = 0; i < document.styleSheets.length; i++)
 					if (document.styleSheets[i].href!.search(regex) >= 0)
@@ -260,7 +262,7 @@ try {
 		try { // IE gives a problem!
 			(styleSheet as CSSStyleSheet).insertRule(selector + " " + properties);
 		}
-		catch (exception) {
+		catch {
 			(styleSheet as CSSStyleSheet).insertRule(selector + " " + properties, 0);
 		}
 	}
@@ -282,20 +284,21 @@ try {
 		pseudoElem: string | null | undefined,
 		styleProperty: string
 	): string | null  {
+		const elem: Element = node as Element,
+			helem: HTMLElement = node as HTMLElement;
 		let computedValue: string | null = null,
-			elem: Element = node as Element,
-			helem: HTMLElement = node as HTMLElement,
 			parenNode: ParentNode | null = node as ParentNode,
-			t: any;
+			t: null;
 
 		do {
 			if (typeof window.getComputedStyle == "function" &&
-				    (computedValue = window.getComputedStyle(elem, pseudoElem).getPropertyValue(styleProperty)).length > 0)
+					(computedValue = window.getComputedStyle(elem, pseudoElem).getPropertyValue(styleProperty)).length > 0)
 				t = null;
 			else if (document.defaultView && document.defaultView.getComputedStyle &&
-				    (computedValue = document.defaultView.getComputedStyle(elem, pseudoElem).getPropertyValue(styleProperty))!.length > 0)
+					(computedValue = document.defaultView.getComputedStyle(elem, pseudoElem).getPropertyValue(styleProperty))!.length > 0)
 				t = null;
 			else if (helem.style && (computedValue = helem.style.getPropertyValue(styleProperty)).length > 0)
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				t = null;
 			else if (typeof helem.offsetLeft != "undefined" && typeof helem.offsetWidth != "undefined")
 				computedValue = (helem.offsetWidth - helem.offsetLeft).toString(10);
@@ -314,7 +317,7 @@ try {
 	 */
 	isCssAbsoluteSize (
 		cssVal: number | string
-	) {
+	): boolean {
 		if (typeof cssVal == "string") {
 			const absoluteSizeVals = ["xx-small", "x-small", "small", "medium",
 				"large", "x-large", "xx-large"
@@ -339,7 +342,7 @@ try {
 	 */
 	isCssRelativeSize (
 		cssVal: string
-	) {
+	): boolean {
 		if (cssVal == "larger" || cssVal == "smaller")
 			return true;
 		return false;
@@ -354,9 +357,9 @@ try {
 	 */
 	isCssFontWeight (
 		cssVal: string | number
-	) {
-		let i: number,
-			c: string[] = ["normal", "bold", "bolder", "lighter"];
+	): boolean {
+		const c: string[] = ["normal", "bold", "bolder", "lighter"];
+		let i: number;
 
 		if (typeof cssVal === "string" && isNaN(parseInt(cssVal)) == false) {
 			for (i = 0, cssVal = Number(cssVal); i < 9; i++)
@@ -380,7 +383,7 @@ try {
 	 */
 	getCssLineHeight (
 		cssVal: string | number
-	) {
+	): string | number | null {
 		return this.getCssFontSize(cssVal, true);
 	}
 
@@ -410,7 +413,7 @@ try {
 				cssVal = cssVal.split("/")[0];
 			if (cssVal == "inherit")
 				return cssVal;
-			if (cssVal.search(this.CssValue) == 0 ||
+			if (cssVal.search(iCss.CssValue) == 0 ||
 				this.isCssAbsoluteSize(cssVal) == true ||
 				this.isCssRelativeSize(cssVal) == true ||
 				this.isCssLength(cssVal) == true)
@@ -419,18 +422,18 @@ try {
 		return null;
 	}
 	// support functions
-	isFontWeight (testString: string) {
+	isFontWeight (testString: string): boolean {
 		const fontWeights = ["normal", "bold", "bolder", "lighter", "100", "200", "300",
-				"400", "500", "600", "700", "800", "900"
-			];
+			"400", "500", "600", "700", "800", "900"
+		];
 		for (let i = 0; i < fontWeights.length; i++)
 			if (testString === fontWeights[i])
 				return true;
 		return false;
 	}
 
-	isCssLength (testString: string) {
-		if (testString.trim().search(this.CssValue) >= 0)
+	isCssLength (testString: string): boolean {
+		if (testString.trim().search(iCss.CssValue) >= 0)
 			return true;
 		return false;
 	}
@@ -463,18 +466,18 @@ try {
 		cssDef: string
 	) {
 		const fontCategories: string[] = ["caption", "icon", "menu", "message-box",
-                "small-caption", "status-bar"
-      ],
-      colorValueRE: RegExp = /#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgb\(\d{1,3}%?\s*,\s*\d{1,3}%?\s*,\s*\d{1,3}%?\s*\)|rgb\(\-?\d{1,3}\s*,\-?\s*\d{1,3}\s*,\s*\-?\d{1,3}\s*\)/;
-
-      let property: string[],
+			"small-caption", "status-bar"
+		],
+			colorValueRE: RegExp = /#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgb\(\d{1,3}%?\s*,\s*\d{1,3}%?\s*,\s*\d{1,3}%?\s*\)|rgb\(-?\d{1,3}\s*,-?\s*\d{1,3}\s*,\s*-?\d{1,3}\s*\)/,
 			properties: string[] = cssDef.split(";"),
+			domElem: HTMLElement | null = Array.isArray(domElemOrArray) == false ? domElemOrArray as HTMLElement : null,
+			arrayArg: string[] | null = Array.isArray(domElemOrArray) == true ? domElemOrArray as string[] : null;
+
+		let property: string[],
 			def: string | string[],
 			val: string | null,
 			box: RegExpMatchArray,
 			modifier: RegExpMatchArray | string,
-			domElem: HTMLElement | null = Array.isArray(domElemOrArray) == false ? domElemOrArray as HTMLElement : null,
-			arrayArg: string[] | null = Array.isArray(domElemOrArray) == true ? domElemOrArray as string[] : null,
 			firstPart: string[],
 			font: string | undefined,
 			fontWeight: string | undefined,
@@ -493,96 +496,99 @@ try {
 		for (let i = 0, j = 0; i < properties.length; i++) {
 			property = properties[i].split(":");
 			switch (property[0]) { // property name
-				case "color":
-				case "background-color":
-					if (property[1].search(colorValueRE) < 0)
-						continue;
-					if (property[0] == "background-color")
-						property[0] = "backgroundColor";
-					if (Array.isArray(domElemOrArray)== true)
-						arrayArg!.push(property[0], property[1]);
-					else
-						domElem!.style[property[0] as any] = property[1];
-					break;
-				case "width":
-				case "height":
-					if ((val = this.doCssMath(MathOperation.CSS_SUM, property[1], 0)) == null)
-						continue;
-					if (arrayArg != null)
-						arrayArg.push(property[0], val);
-					else if (domElem)
-						domElem.style[property[0]] = val;
-					break;
-				case "font":
-					for (; j < fontCategories.length; j++)
-						if (property[1] == fontCategories[j])
-							break;
-					if (j == fontCategories.length) {
-						// check for multiple font families with comma (,) character
-						def = property[1].replace(/"/, "'");
-						if (def.search(/'/) >= 0) { // font family with quotes
-							def = def.split(/'/);
-							firstPart = def.shift()!.split(/\s+/);
-							for (j = firstPart.length - 1; j >= 0; j--)
-								if (firstPart[j].search(/,/) >= 0)
-									(def as string[]).unshift(firstPart.pop()!);
-							for (j = 0; j < def.length; j++)
-								if (def[j].search(/\s/) >= 0)
-									def[j] = "'" + def[j] + "'";
-							def = def.join("");
-						}
-						else { // font family with perhaps only commas
-							def = def.split(/,/);
-							firstPart = def.shift()!.split(/\s+/);
-							def.unshift(firstPart.pop()!);
-							def = def.join(",");
-						}
-						def = firstPart.concat(def);
-						for (j = def.length - 1; j >= 0; j--)
-							if (def[j] == "")
-								(def as string[]).splice(j, 1);
+			case "color":
+			case "background-color":
+				if (property[1].search(colorValueRE) < 0)
+					continue;
+				if (property[0] == "background-color")
+					property[0] = "backgroundColor";
+				if (Array.isArray(domElemOrArray)== true)
+					arrayArg!.push(property[0], property[1]);
+				else
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					domElem!.style[property[0] as any] = property[1];
+				break;
+			case "width":
+			case "height":
+				if ((val = this.doCssMath(MathOperation.CSS_SUM, property[1], 0)) == null)
+					continue;
+				if (arrayArg != null)
+					arrayArg.push(property[0], val);
+				else if (domElem)
+					domElem.style[property[0]] = val;
+				break;
+			case "font":
+				for (; j < fontCategories.length; j++)
+					if (property[1] == fontCategories[j])
+						break;
+				if (j == fontCategories.length) {
+					// check for multiple font families with comma (,) character
+					def = property[1].replace(/"/, "'");
+					if (def.search(/'/) >= 0) { // font family with quotes
+						def = def.split(/'/);
+						firstPart = def.shift()!.split(/\s+/);
+						for (j = firstPart.length - 1; j >= 0; j--)
+							if (firstPart[j].search(/,/) >= 0)
+								(def as string[]).unshift(firstPart.pop()!);
 						for (j = 0; j < def.length; j++)
-							if (def[j] == "normal") {
-								switch (def.length) {
-									case 2:
-										if (j > 0)
-											return false;
-										fontStyle = def[j];
-										break;
-									case 3:
-										if (j > 1)
-											return false;
-										if (j == 1)
-											fontWeight = def[j];
-										else
-											fontStyle = def[j];
-										break;
-									case 4:
-										if (j > 2)
-											return false;
-										if (j == 2)
-											fontWeight = def[j];
-										else if (j == 1)
-											fontVariant = def[j];
-										else
-											fontStyle = def[j];
-										break;
-									case 5:
-										if (j == 0)
-											fontStyle = def[j];
-										else if (j == 1)
-											fontVariant = def[j];
-										else if (j == 2)
-											fontWeight = def[j];
-										else
-											return false;
-									default:
-										return false; // formatting error
-								}
+							if (def[j].search(/\s/) >= 0)
+								def[j] = "'" + def[j] + "'";
+						def = def.join("");
+					}
+					else { // font family with perhaps only commas
+						def = def.split(/,/);
+						firstPart = def.shift()!.split(/\s+/);
+						def.unshift(firstPart.pop()!);
+						def = def.join(",");
+					}
+					def = firstPart.concat(def);
+					for (j = def.length - 1; j >= 0; j--)
+						if (def[j] == "")
+							(def as string[]).splice(j, 1);
+					for (j = 0; j < def.length; j++)
+						if (def[j] == "normal") {
+							switch (def.length) {
+							case 2:
+								if (j > 0)
+									return false;
+								fontStyle = def[j];
+								break;
+							case 3:
+								if (j > 1)
+									return false;
+								if (j == 1)
+									fontWeight = def[j];
+								else
+									fontStyle = def[j];
+								break;
+							case 4:
+								if (j > 2)
+									return false;
+								if (j == 2)
+									fontWeight = def[j];
+								else if (j == 1)
+									fontVariant = def[j];
+								else
+									fontStyle = def[j];
+								break;
+							case 5:
+								if (j == 0)
+									fontStyle = def[j];
+								else if (j == 1)
+									fontVariant = def[j];
+								else if (j == 2)
+									fontWeight = def[j];
+								else
+									return false;
+								break;
+							default:
+								return false; // formatting error
 							}
+						}
 						else if (def[j] == "italic" || def[j] == "oblique")
 							fontStyle = def[j];
 						else if (def[j] == "small-caps")
+							// eslint-disable-next-line @typescript-eslint/no-unused-vars
 							fontVariant = def[j];
 						else if (this.isFontWeight(def[j]) == true)
 							fontWeight = def[j];
@@ -595,46 +601,46 @@ try {
 							fontFamily = def.join("");
 							j = def.length;
 						}
-					}
-					else
-						cssFont = property[1];
-					break;
-				case "font-size":
-					if (property[0] == "font-size" &&
+				}
+				else
+					cssFont = property[1];
+				break;
+			case "font-size":
+				if (property[0] == "font-size" &&
 						(val = this.getCssFontSize(property[1]) as string | null) != null)
-						fontSize = val;
-					break;
-				case "font-weight":
-					if (property[0] == "font-weight" &&
+					fontSize = val;
+				break;
+			case "font-weight":
+				if (property[0] == "font-weight" &&
 						this.isFontWeight(property[1]) == true)
-						fontWeight = properties[i + 1];
-					break;
-				case "font-family":
-					if (property[0] == "font-family")
-						fontFamily = property[1];
-					break;
-				case "font-style":
-					if (property[0] == "font-style" &&
+					fontWeight = properties[i + 1];
+				break;
+			case "font-family":
+				if (property[0] == "font-family")
+					fontFamily = property[1];
+				break;
+			case "font-style":
+				if (property[0] == "font-style" &&
 						(property[1] == "italic" || property[1] == "oblique"))
-						fontStyle = property[1];
-					break;
-				case "line-height":
-					if (property[0] == "line-height" &&
+					fontStyle = property[1];
+				break;
+			case "line-height":
+				if (property[0] == "line-height" &&
 						(val = this.getCssLineHeight(property[1]) as string | null) != null)
-						lineHeight = val;
-					break;
-				case "float":
-					if (arrayArg)
-						arrayArg.push("cssFloat", property[1]);
-					else if (domElem)
-						domElem.style.cssFloat = property[1];
-					break;
-				default:
-					if ((box = property[0].match(/margin|padding|border/)!) != null) {
-						if ((modifier = property[0].match(/\-(top|bottom|right|left)/)!) != null)
-							modifier = modifier[1].charAt(0).toUpperCase() + modifier[1].substring(1);
-						else // no modifier!
-							modifier = "";
+					lineHeight = val;
+				break;
+			case "float":
+				if (arrayArg)
+					arrayArg.push("cssFloat", property[1]);
+				else if (domElem)
+					domElem.style.cssFloat = property[1];
+				break;
+			default:
+				if ((box = property[0].match(/margin|padding|border/)!) != null) {
+					if ((modifier = property[0].match(/-(top|bottom|right|left)/)!) != null)
+						modifier = modifier[1].charAt(0).toUpperCase() + modifier[1].substring(1);
+					else // no modifier!
+						modifier = "";
 						/*
 						if (box[0] == property[0]) {
 						propValues = property[1].split(/\s+/)
@@ -645,13 +651,16 @@ try {
 						return false;
 						}
 						*/
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						domElem!.style[(box + modifier) as any] = property[1];
-					}
-					else if (domElem && (box = property[0].match(/(\w+)\-(\w)(\w+)/)!) != null)
-						domElem.style[(box[1] + box[2].toUpperCase() + box[3]) as any] = property[1];
-					else if (domElem && property[0].length > 0)
-						domElem.style[property[0] as any] = property[1];
-					break;
+				}
+				else if (domElem && (box = property[0].match(/(\w+)-(\w)(\w+)/)!) != null)
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					domElem.style[(box[1] + box[2].toUpperCase() + box[3]) as any] = property[1];
+				else if (domElem && property[0].length > 0)
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					domElem.style[property[0] as any] = property[1];
+				break;
 			}
 		}
 		// specially defined properties
@@ -711,8 +720,8 @@ try {
 			sum = 0,
 			prod: number | undefined = 0; // match results of examing a CSS length string
 
-		if ((typeof val1 == "string" && val1.search(this.CssValue) < 0) ||
-				(typeof val2 == "string" && val2.search(this.CssValue) < 0))
+		if ((typeof val1 == "string" && val1.search(iCss.CssValue) < 0) ||
+				(typeof val2 == "string" && val2.search(iCss.CssValue) < 0))
 			return null ;
 		if (operation == MathOperation.CSS_SUM) {
 			if (Array.isArray(val1)  == true) {
@@ -752,7 +761,7 @@ try {
 				}
 			else {
 				val1_dim = this.extractValueDim(val1 as string | number);
-				let val2_dim: CssValueDim | null = this.extractValueDim(val2 as string | number);
+				const val2_dim: CssValueDim | null = this.extractValueDim(val2 as string | number);
 				if (val2_dim != null && val2 != val2_dim.val &&
 						val1_dim != null && val1 != val1_dim.val && val1_dim.val != val2_dim.val)
 					return null;
@@ -770,17 +779,17 @@ try {
 	extractValueDim(
 		cssVal: string | number
 	): CssValueDim | null {
-		let components: RegExpMatchArray | null,
-			retVal: CssValueDim = {} as CssValueDim;
+		let components: RegExpMatchArray | null;
+		const retVal: CssValueDim = {} as CssValueDim;
 
 		if (typeof cssVal === "number")
 			return { val: cssVal, dim: "" };
 		if (typeof cssVal !== "string")
 			return null;
-		if ((components = cssVal.match(this.CssValue)) == null)
+		if ((components = cssVal.match(iCss.CssValue)) == null)
 			return null;
-//			if (components.length != 3 && cssVal != components[1])
-//				return null;
+		//	if (components.length != 3 && cssVal != components[1])
+		//	return null;
 		if (components[1])
 			retVal.val = parseInt(components[1]);
 		else if (components[2])
@@ -825,8 +834,7 @@ try {
 		containingElement?: HTMLSpanElement
 	): number {
 		// create a temporary element to calculate the width of the word
-		let tempElement: HTMLSpanElement,
-			wordWidth: number;
+		let tempElement: HTMLSpanElement;
 
 		if (!containingElement) {
 			tempElement = document.createElement("span");
@@ -839,7 +847,7 @@ try {
 		tempElement.innerHTML = word;
 
 		// get the width of the word
-		 wordWidth = tempElement.offsetWidth;
+		const wordWidth = tempElement.offsetWidth;
 
 		// remove the temporary element
 		if (!containingElement)
@@ -848,30 +856,27 @@ try {
 	}
 
 	getEffectiveElementWidth(element: HTMLElement): number {
-		let parentElement = element.parentElement,
-			parentComputedStyle: CSSStyleDeclaration,
+		const parentElement = element.parentElement;
+		let parentComputedStyle: CSSStyleDeclaration,
 			elementComputedStyle: CSSStyleDeclaration,
 			elementWidth: number,
 			parentWidth: number,
-			columnPercentageWidth: number,
-			effectiveColumnWidth: number,
-			padding: number,
-			margin: number;
+			effectiveColumnWidth: number;
 
-			if (parentElement!.offsetWidth == 0 || element.offsetWidth == 0) {
-				parentComputedStyle = getComputedStyle(parentElement as Element);
-				elementComputedStyle = getComputedStyle(element as Element);
-				elementWidth = parseFloat(elementComputedStyle.getPropertyValue("width"));
-				parentWidth = parseFloat(parentComputedStyle.getPropertyValue("width"));
-			} else {
-				parentWidth = parentElement!.offsetWidth;
-				elementWidth = element.offsetWidth;
-				elementComputedStyle = getComputedStyle(element as Element);
-			}
-			columnPercentageWidth = (elementWidth / parentWidth) * 100,
-			effectiveColumnWidth = (parentWidth * columnPercentageWidth) / 100,
-			padding = parseFloat(elementComputedStyle.getPropertyValue("padding-left")) + parseFloat(elementComputedStyle.getPropertyValue("padding-right")),
-			margin = parseFloat(elementComputedStyle.getPropertyValue("margin-left")) + parseFloat(elementComputedStyle.getPropertyValue("margin-right"));
+		if (parentElement!.offsetWidth == 0 || element.offsetWidth == 0) {
+			parentComputedStyle = getComputedStyle(parentElement as Element);
+			elementComputedStyle = getComputedStyle(element as Element);
+			elementWidth = parseFloat(elementComputedStyle.getPropertyValue("width"));
+			parentWidth = parseFloat(parentComputedStyle.getPropertyValue("width"));
+		} else {
+			parentWidth = parentElement!.offsetWidth;
+			elementWidth = element.offsetWidth;
+			elementComputedStyle = getComputedStyle(element as Element);
+		}
+		const columnPercentageWidth = (elementWidth / parentWidth) * 100;
+		effectiveColumnWidth = (parentWidth * columnPercentageWidth) / 100;
+		const padding = parseFloat(elementComputedStyle.getPropertyValue("padding-left")) + parseFloat(elementComputedStyle.getPropertyValue("padding-right"));
+		const margin = parseFloat(elementComputedStyle.getPropertyValue("margin-left")) + parseFloat(elementComputedStyle.getPropertyValue("margin-right"));
 
 		effectiveColumnWidth -= (padding + margin);
 		return effectiveColumnWidth;
@@ -889,10 +894,10 @@ try {
 		colOrTdElem: HTMLTableColElement | HTMLTableCellElement,
 		testingElement: HTMLSpanElement
 	): void {
-		let containerWidth: number = this.getEffectiveElementWidth(colOrTdElem),
-			wordWidth: number,
+		const containerWidth: number = this.getEffectiveElementWidth(colOrTdElem),
+			computedStyle: CSSStyleDeclaration = getComputedStyle(colOrTdElem);
+		let wordWidth: number,
 			computedFontSize: number,
-			computedStyle: CSSStyleDeclaration = getComputedStyle(colOrTdElem),
 			fontSize: string = computedStyle.getPropertyValue("font-size"),
 			fontFamily: string = computedStyle.getPropertyValue("font-family");
 
@@ -918,6 +923,7 @@ try {
 					break;
 				}
 			}
+		// eslint-disable-next-line no-constant-condition
 		} while (true);
 	}
 }

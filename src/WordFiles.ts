@@ -4,6 +4,7 @@
  * Browser based support for using these libraries as <script> loads below
  *    Other uses include NodeJS modules
  */
+export { createInWord };
 
 const HtmlDocTypeHeading =
 `<!DOCTYPE html>
@@ -17,33 +18,33 @@ xmlns='http://www.w3.org/TR/REC-html40'>`;
  */
 function createInWord(
 	source: {
-   	contentInHTML: string,
+		contentInHTML: string,
 		sourceType: "STRING" | "FILE"
 		sourceProtocol?: "HTTPS" | "FILE"  // file will be assumed
 	},
-   savedFileName: string
+	savedFileName: string
 ) {
-   let aNode: HTMLAnchorElement = document.createElement("a");
+	const aNode: HTMLAnchorElement = document.createElement("a");
 
-		if (source.sourceType == "FILE") {
-			if (!source.sourceProtocol)
-				throw "Use of sourceType 'File' requires specifying optional parameter 'sourceProtocol'\n" +
+	if (source.sourceType == "FILE") {
+		if (!source.sourceProtocol)
+			throw "Use of sourceType 'File' requires specifying optional parameter 'sourceProtocol'\n" +
 					"with either 'HTTPS' parameter value (when using browser & remote server) or 'FILE' if\n" +
 					"using a server like Node where permissions is not an issue.";
-			if (source.sourceProtocol == 'HTTPS') {
+	//	if (source.sourceProtocol == "HTTPS") {
 
-			} else { // HTTPS
+	//	} else { // HTTPS
 
-			}
-		}
-      if (source.contentInHTML.search(/^\s*<!DOCTYPE html>/) != 0)
-         source.contentInHTML = HtmlDocTypeHeading + source.contentInHTML;
-      // if filename
-      document.body.appendChild(aNode);
-		aNode.href = "data:application/vnd.ms-word;charset=utf-8," +
-					encodeURIComponent(source.contentInHTML);
-		aNode.download = savedFileName  + ".doc";
-		aNode.click();
+	//	}
+	}
+	if (source.contentInHTML.search(/^\s*<!DOCTYPE html>/) != 0)
+		source.contentInHTML = HtmlDocTypeHeading + source.contentInHTML;
+		// if filename
+	document.body.appendChild(aNode);
+	aNode.href = "data:application/vnd.ms-word;charset=utf-8," +
+			encodeURIComponent(source.contentInHTML);
+	aNode.download = savedFileName  + ".doc";
+	aNode.click();
 }
 
 

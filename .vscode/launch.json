@@ -4,20 +4,65 @@
    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
    "version": "0.2.0",
    "configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug small test",
+			"preLaunchTask": "tsc: test.ts in ./test",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}/test/test.js",
+			"outFiles": [
+				"${workspaceFolder}/**/*.js"
+			],
+			"sourceMaps": true,
+			"console": "integratedTerminal"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch Program",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"args": [
+				"D:\\dev\\SharePoint\\SearchFormWP\\node_modules\\gulp-runtime\\index.js"
+			],
+			"program": "${workspaceFolder}\\createDTSFile.ts",
+			"outFiles": [
+				"${workspaceFolder}/**/*.js"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch Gulpfile with Named Task",
+			"preLaunchTask": "Build Gulpfile.JS",
+			"program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
+   //      "args": [
+				// the config name in gulpfile.config.json should be used
+	//			"-t", "default", "-s", "test"
+	//		],
+			"env": {
+				"gulpconfigpath": "./build/Gulp/gulpfile.config.json",
+				"NODE_ENV": "development"
+ 			},
+			"cwd": "${workspaceFolder}",
+ 			"console": "integratedTerminal",
+			"sourceMaps": true
+		},
       {
-         "type": "pwa-node",
-         "request": "launch",
-         "name": "Launch Program",
-         "skipFiles": [
-            "<node_internals>/**"
-         ],
-         "args": [
-            "D:\\dev\\SharePoint\\SearchFormWP\\node_modules\\gulp-runtime\\index.js"
-         ],
-         "program": "${workspaceFolder}\\createDTSFile.ts",
-         "outFiles": [
-            "${workspaceFolder}/**/*.js"
-         ]
-      }
+			"type": "node",
+			"request": "launch",
+			"name": "Launch active file",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"args": [
+				"${fileBasenameNoExtension}.js"
+			],
+			"preLaunchTask": "TSC compile this file"
+      },
    ]
 }
