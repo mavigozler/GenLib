@@ -5,7 +5,7 @@ export {
 	rewriteWindow
 };
 /* NOTE that this function will attempt to determine if the
- arguments fromt 'title' to 'body_style' are either STRING type
+ arguments from 'title' to 'body_style' are either STRING type
  or OBJECT type.  If STRING type, document.write() will be used
  to render the HTML.  If OBJECT type, they will be assumed
  to be DOM Object nodes and will be inserted into document
@@ -14,7 +14,7 @@ export {
  type expandedWinOptions = {
 	winTitle?: string,  // to be put on title bar
 	headerStyle?: string,  // CSS strings to be put in HEAD element
-	headerScript?: string,  // Javascripts in the HEAD element
+	headerScript?: string,  // Javascript in the HEAD element
 	otherHeader?: string, // any string as HTML markup that can be placed in HEAD element
 	body?: string | HTMLBodyElement, // the text making up the body of the HTML markup
 	bodyAttributes?: string | string[],

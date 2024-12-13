@@ -1310,7 +1310,7 @@ const buildDocFrag = {
 
 
 
-	_build : function (
+	_build: function (
 		markupString: string,
 		parentNode: Node,
 		namespace: string
@@ -1386,14 +1386,14 @@ const buildDocFrag = {
 		for (i = 1; i < markupElements.length; i++) {
 			const elementPair = markupElements[i].split(/>/g);
 			for (j = 0; j < elementPair.length - 1; j++)
-				elementPair[j] = elementPair[j] + ">";
+				elementPair[j] += ">";
 			markupElements2 = markupElements2.concat(elementPair);
 		}
 		markupElements2.unshift(markupElements[0]);
 		markupElements = markupElements2;
 
 		// inner function used by _build() only
-		function removeTokenizingStrings(content: string) {
+		const removeTokenizingStrings = (content: string) => {
 			let i,
 				token,
 				reObj;
@@ -1404,7 +1404,7 @@ const buildDocFrag = {
 					content = content.replace(reObj, charactersToTokenize[i + 1]);
 				}
 			return content;
-		}
+		};
 
 		// this loop creates an array (markupNodes) of DOM objects based on identified
 		// tags in the order in which they are encountered

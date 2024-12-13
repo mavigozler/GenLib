@@ -64,7 +64,7 @@ function contentChange(changeInfo: {
 		let report =
 `\n==========\nContent Change: pattern='${changeInfo.filePattern}', ${changeInfo.edits.length} edits specified`;
 		glob(changeInfo.filePattern, {ignore: excludePattern})
-		.then((files) => {
+		.then((files: string[]) => {
 			report += `\n\n  glob("${changeInfo.filePattern}")`;
 			report += `\n     glob() => count: ${files.length}`;
 			files = checkPaths(files, [__dirname]);
@@ -73,7 +73,7 @@ function contentChange(changeInfo: {
 			const contentChangeRead: Promise<string>[] = [];
 			for (let i = 0; i < files.length; i++) {
 				contentChangeRead.push(new Promise<string>((resolve) => {
-					fs.readFile(files[i], "utf8", (err, content) => {
+					fs.readFile(files[i], "utf8", (err: Error, content: string) => {
 						report += `\n======\nFile #${i + 1}:  fs.readFile('${files[i]}')`;
 						if (err) {
 							report += `\nERROR: ${err.message}`;
@@ -96,7 +96,7 @@ function contentChange(changeInfo: {
 							}
 					//		report (header);
 							if (changeCount > 0) {
-								fs.writeFile(files[i], content, "utf8", (err) => {
+								fs.writeFile(files[i], content, "utf8", (err: Error) => {
 									report += `\nFile #${i + 1}: writeFile(${files[i]}`;
 									if (err)
 										report += `\n  ERROR: writing file '${files[i]}'\n    ${err.message}\n`;
@@ -115,7 +115,7 @@ function contentChange(changeInfo: {
 			}).catch((err) => {
 				resolve(err);
 			});
-		}).catch((err) => {
+		}).catch((err: Error) => {
 			report += `\nERROR: ${err.message}`;
 			resolve(report);
 		});

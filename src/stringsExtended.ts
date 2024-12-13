@@ -169,7 +169,7 @@ function findLineNumber(
 		}[] = [];
 		let resolved = false;
 
-		rl.on('line', (line) => {
+		rl.on('line', (line: string) => {
 			lineNumber++;
 			if (line.search(searchPattern) >= 0) {
 				foundLines.push({
@@ -192,7 +192,7 @@ function findLineNumber(
 				resolve(foundLines);
 			}
 		});
-		rl.on('error', (err) => {
+		rl.on('error', (err: Error) => {
 			reject(err);
 		});
 	});

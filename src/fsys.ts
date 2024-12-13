@@ -155,7 +155,7 @@ export class Directory {
 		const indent = (options && options.indent) || 2;
 		const indentchar = (options && options.indentchar) || " ";
 		let pad: string = "",
-			gparent: Directory | undefined = this.parent ? this.parent : undefined;
+			gparent: Directory | undefined = this.parent || undefined;
 
 		for (let i = 0; i < indent; i++)
 			pad += indentchar;
@@ -202,7 +202,7 @@ export class Directory {
 	}): Promise<boolean[]> {
 		return new Promise((resolve, reject) => {
 			options = options || { recursive: false, preview: true };
-			const preview = options.preview ? options.preview : true;
+			const preview = options.preview || true;
 			//const recursive = options.recursive ? options.recursive : false;
 			const delOptions: {dryRun: boolean} = preview == true ? { dryRun: true } : { dryRun: false };
 			// if there are no files/subdirs, log and return
@@ -234,7 +234,7 @@ export class Directory {
 							this.logger(`deleteItems()::del.deleteAsync('${itemFullPath}')` +
 								`\n${JSON.stringify(response, null, "  ")}`);
 							resolve(true);
-						}).catch((err) => {
+						}).catch((err: {code: string}) => {
 							if (err.code == "ENOTEMPTY")
 								rimraf(itemFullPath).then((response: boolean) => {
 									this.logger(`deleteItems()::rimraf('${itemFullPath}')` +

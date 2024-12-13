@@ -50,7 +50,7 @@ function NodeFsMulticopy(
 						dest = item.dest;
 					}
 					if (errored == false)
-						fs.copyFile(src, dest, (err) => {
+						fs.copyFile(src, dest, (err: Error) => {
 							if (err)
 								errResponses.push(`'${src}' copy failed`);
 							resolve();
