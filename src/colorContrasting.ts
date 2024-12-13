@@ -8,7 +8,7 @@ class ColorComponents {
    } = {r: 0, g: 0, b: 0};
 
    constructor(color: string | number) {
-   	let colors: string[] = [ "r", "g", "b" ],
+		let colors: string[] = [ "r", "g", "b" ],
          components;
 
 // colors are names, strings
