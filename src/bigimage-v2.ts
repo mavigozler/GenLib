@@ -82,6 +82,18 @@ function setThumbedImages(
 	force?: boolean,
 	includePrompt?: boolean
 ): void {
+
+	const calculationError = (message?: string) => {
+		const defaultMessage = "There was a calculation error, probably in CSS math";
+		if (message) {
+			console.log(message);
+			return message;
+		} else {
+			console.log(defaultMessage);
+			return defaultMessage;
+		}
+	}
+
 	const imgSetRegex: RegExp = /[0-9]*\.?[0-9]+/;
 	let bodyImages: HTMLCollectionOf<HTMLImageElement> | null,
 		imgElem: HTMLImageElement,
@@ -171,17 +183,6 @@ function setThumbedImages(
 						imgElem.width = computedFactor.val * imgElem.width;
 				}
 			}
-	}
-
-	function calculationError (message?: string) {
-		const defaultMessage = "There was a calculation error, probably in CSS math";
-		if (message) {
-			console.log(message);
-			return message;
-		} else {
-			console.log(defaultMessage);
-			return defaultMessage;
-		}
 	}
 }
 
@@ -531,7 +532,7 @@ elements to include attribute or attribute values required by the script.
 
 REDUCING THE SIZE OF (THUMBING) SELECTED/ALL DOCUMENT IMAGES
 
-Peform the following steps.
+Perform the following steps.
 
 1. Add an 'onload' event to the BODY element to call a function that reduces
 the sizes of all images or selected images.  The body element should look
@@ -648,7 +649,7 @@ This HTML code is valid with Strict document type HTML.  Note the location
 of 'bigimage.js' is determined by the user.
 
   b) Go to where the text was added within the HEAD element.  With the first
-   SCRIPT element within the function intializePage(), change the value
+   SCRIPT element within the function initializePage(), change the value
    of variable 'reducedImageSize' to a value between 0 and 1 which represents
    the size of the images you want.  Thus for a value of '0.1', all thumbed
    images will be 10% of the original size.
@@ -656,7 +657,7 @@ of 'bigimage.js' is determined by the user.
   c) Modify the body element (BODY tag) so that it includes the following
 'onload' attribute:
 
-    <body ... onload="intializePage();" ...>
+    <body ... onload="initializePage();" ...>
 
 Note that "..." refers to other possible attributes of the body element.
 
@@ -667,7 +668,7 @@ Note that "..." refers to other possible attributes of the body element.
 SETTING SELECTED DOCUMENT IMAGES TO BE MAGNIFIED
 
 To enable reduced images to be magnified (in two-stages) in new windows,
-peform the following steps:
+perform the following steps:
 
 1. Add the following 'onclick' attribute to the image element (IMG tag) of
 all reduced images (the text added should be verbatim):
@@ -714,7 +715,7 @@ defines the style properties for the classed element.
 
 So the text "Click on..." is reduced to a small size (60% of normal body text)
 and both this text and the image are taken out of the flow (to the left) by
-the float property, with the container having margins and padding approprate
+the float property, with the container having margins and padding appropriate
 to give room.  Other properties could be added to change color or add
 borders.  Additional text could be added to caption the image.
 
