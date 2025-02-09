@@ -12,6 +12,37 @@ import { deleteAsync } from "del";
 import { rimraf } from "rimraf";
 
 export { NodeFsMulticopy };
+
+export class FileSystemItem {   // starting point for any file system item whether File or Directory
+	path: string;
+	stats: fs.Stats
+
+	private constructor (
+		path: string,
+		stats: fs.Stats
+	) {
+		this.path = path;
+		this.stats = stats;
+	}
+
+	static create(path: string): Promise<FileSystemItem> {
+		return new Promise<FileSystemItem>((resolve, reject) => {
+			fs.stat(path, (err, stats) => {
+				if (err)
+					reject(err);
+				else
+					resolve(new FileSystemItem(path, stats));
+			});
+		});
+	}
+
+	getItemType(): "file" | "folder" {
+		if (this.stats.isDirectory() == true)
+			return "folder";
+		return "file";
+	}
+}
+
 export class Directory {
 	dirData: DirItem = {} as DirItem;
 	logger: (...data: unknown[]) => void;
@@ -273,7 +304,7 @@ function NodeFsMulticopy(
 						let modItem: NodeFsMulticopyElem[] = [];
 						for (const result of results)
 							if (typeof currentItem != "string")
-								modItem.push({ src: result, dest: currentItem.dest } as SrcDestCopy);
+								modItem.push({ src: result, dest: currentItem.dest, destIsDir: currentItem.destIsDir } as SrcDestCopy);
 						else
 							modItem.push(result);
 						resolve(modItem);
@@ -305,7 +336,10 @@ function NodeFsMulticopy(
 							}
 						} else {
 							src = item.src;
-							dest = item.dest;
+							if (item.destIsDir == true)
+								dest = `${item.dest}/${path.basename(src)}`;
+							else
+								dest = item.dest;
 						}
 						if (errored == false)
 							fs.copyFile(src, dest, (err: unknown) => {

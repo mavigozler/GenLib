@@ -28,6 +28,7 @@ type FSysItem = DirItem | FileItem;
 type SrcDestCopy = { // array of {src: string;dest: string}
 	src: string; // where file currently is
 	dest: string;  // where copy should be: Node requires full path, not just directory
+   destIsDir?: boolean;
 };
 type NodeFsMulticopyElem = SrcDestCopy | string ;
 

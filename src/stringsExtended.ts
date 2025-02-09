@@ -4,11 +4,16 @@ import * as fs from "fs";
 import * as readline from "node:readline/promises";
 
 export {
+	string2RE, 
 	strchcount, getCharPositionFromLineNumber, insertStringInString,
 	findSubstringIndex, longestCommonSubstring, findLineNumber,
 	runTestSuite, basename, longestCommonPath, fwdSlash, showRelativePath,
 	convertCtrlToPrintForm
 };
+
+function string2RE(str: string): RegExp {
+	return new RegExp(str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+}
 
 function strchcount (
 	testStr: string,
