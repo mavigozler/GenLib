@@ -1,6 +1,6 @@
 "use strict";
 
-enum FSysItemType {
+export enum FSysItemType {
    FILE,
    DIRECTORY
 }
@@ -301,7 +301,7 @@ function NodeFsMulticopy(
 				globOps.push(new Promise<NodeFsMulticopyElem[]>((resolve, reject) => {
 					const pattern = typeof currentItem !== "string" ? currentItem.src : currentItem;
 					glob(pattern).then((results: NodeFsMulticopyElem[]) => {
-						let modItem: NodeFsMulticopyElem[] = [];
+						const modItem: NodeFsMulticopyElem[] = [];
 						for (const result of results)
 							if (typeof currentItem != "string")
 								modItem.push({ src: result, dest: currentItem.dest, destIsDir: currentItem.destIsDir } as SrcDestCopy);

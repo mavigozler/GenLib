@@ -2,10 +2,17 @@
 
 
 export { getCheckedInput, setCheckedInput, removeChildren, replaceSpanText,
-	quickMarkupToDocObjects, makeSelectList, createRadioNode
+	quickMarkupToDocObjects, makeSelectList, createRadioNode, renderTable,
+	DataTable 
  };
 
- type voidFunction = () => void;
+type voidFunction = () => void;
+
+type renderTableHeaderObject = {
+	title: string;
+	style: string;
+};
+
 /**
  * @function getCheckedInput -- returns the value of a named HTML input object representing radio choices
  * @param {HtmlInputDomObject} inputObj -- the object representing selectabe
@@ -16,9 +23,10 @@ function getCheckedInput(inputObj: HTMLInputElement | RadioNodeList): null | str
 	if ((inputObj as RadioNodeList).length) { // multiple checkbox
 		const checked: string[] = [];
 
-		for (const cbox of inputObj as RadioNodeList)  // this is a checkbox type
-			if ((cbox as HTMLInputElement).checked == true)
-				checked.push((cbox as HTMLInputElement).value);
+		(inputObj as RadioNodeList).forEach((listNode) => {
+			if ((listNode as HTMLInputElement).checked == true)
+				checked.push((listNode as HTMLInputElement).value);
+		})
 		if (checked.length > 0) {
 			if (checked.length == 1)
 				return checked[0];
@@ -44,15 +52,15 @@ function setCheckedInput(
 	if ((inputObj as RadioNodeList).length && inputValue != null && Array.isArray(inputValue) == true) {  // a checked list
 		if (inputValue.length && inputValue.length > 0) {
 			for (const val of inputValue)
-				for (const cbox of inputObj as RadioNodeList)
-					if ((cbox as HTMLInputElement).value == val)
-						(cbox as HTMLInputElement).checked = true;
+				(inputObj as RadioNodeList).forEach((listItem) => {
+					if ((listItem as HTMLInputElement).value == val)
+					(listItem as HTMLInputElement).checked = true;
+				});
 		} else
-			for (const cbox of inputObj as RadioNodeList)
-				if ((cbox as HTMLInputElement).value == inputValue as string) {
-					(cbox as HTMLInputElement).checked = true;
-					return true;
-				}
+			((inputObj as RadioNodeList).forEach((listItem) => {
+				if ((listItem as HTMLInputElement).value == inputValue as string)
+					(listItem as HTMLInputElement).checked = true;
+			}));
 	} else if (inputValue != null) {
 		inputObj.value = inputValue as string;
 		return true;
@@ -65,7 +73,14 @@ function removeChildren(htmlElem: HTMLElement) {
 		htmlElem.removeChild(htmlElem.firstChild);
 }
 
-
+/**
+ * 
+ * @param selAttribs -- object with key value pairs for attributes of the select element
+ * @param optVals -- array of values for the option
+ * @param optText -- array of text for the option
+ * @param optAttribs -- object with key value pairs for attributes of the option element
+ * @returns HTMlSelectElement
+ */
 function makeSelectList(
 	selAttribs: {[key: string]: string | voidFunction},
 	optVals: string[],
@@ -114,6 +129,201 @@ function makeSelectList(
 		}
 	return selectElem;
 }
+
+/**
+ * @function renderTable
+ * @param params -- the following properties are set
+ *      .headers: string[]  the text to be used in column headers
+ *      .display: ((arg?: any) => string | {attrib: string; iValue: string}) []
+ *               a function to execute to render what is displayed in table cell
+ *          can be either a string or object of type {attrib: string; value: string;}
+ *           attrib can be td attribs with format "id='<idval>';;class='<classval>';;..."
+ *             use split(";;") to disjoin, then use split("=") to get name=value pairs
+ *      .data: any[]  the data items as array to be supplied and executed
+ *      .attach: the form node to attach the table to
+ *      .options: string[]
+ */
+function renderTable(params: {
+		headers: (string | renderTableHeaderObject)[];
+		display: ((arg?: unknown) => string |
+			{
+				attrib: string;
+				iValue: string;
+				wrapLink?: string; // this is href attribute value
+			})[];
+		data: unknown[];
+		attach: HTMLDivElement;
+		options: string[];
+		title?: string;
+		subtitle?: string;
+	}): void {
+		const ADD_COUNTER: number = 0x0001;
+		let trNode: HTMLTableRowElement,
+			tdNode: HTMLTableCellElement,
+			caption: HTMLTableCaptionElement,
+			paraElem: HTMLParagraphElement,
+			value: string |
+				{
+					attrib: string;
+					iValue: string;
+					wrapLink?: string;
+				},
+			//cItem: { [key:string]: string;},
+			options = 0x0000,
+			headerTitle: string,
+			counterColumn = -1,
+			matches,
+			counter = 0;
+
+		if (params.options)
+			for (const option of params.options)
+				if ((matches = option.match(/addCounter\{(\d+)\}/)) != null) {
+					options |= ADD_COUNTER;
+					counterColumn = matches[1] ? parseInt(matches[1]) : 1;
+					counter = 1;
+				}
+
+		const tblNode = document.createElement("table");
+		tblNode.style.margin = "2em auto";
+		if (params.title) {
+			caption = document.createElement("caption");
+			caption.appendChild(document.createTextNode(params.title));
+			caption.style.color = "lime";
+			caption.style.backgroundColor = "navy";
+			caption.style.captionSide = "top";
+			caption.style.fontSize = "125%";
+			caption.style.fontWeight = "bold";
+			caption.style.paddingLeft = "2em";
+
+			tblNode.appendChild(caption);
+			if (params.subtitle) {
+				paraElem = document.createElement("p");
+				caption.appendChild(paraElem);
+				paraElem.style.fontSize = "83%";
+				paraElem.style.color = "yellow";
+				paraElem.style.fontWeight = "normal";
+				paraElem.appendChild(document.createTextNode(params.subtitle));
+			}
+		}
+		params.attach.appendChild(tblNode);
+		tblNode.style.width = "auto";	
+		trNode = document.createElement("tr");
+		tblNode.appendChild(trNode);
+		for (let i = 0; i < params.headers.length; i++) {
+		if ((options & ADD_COUNTER) != 0 && i == counterColumn - 1) {
+			tdNode = document.createElement("th");
+			trNode.appendChild(tdNode);
+			tdNode.appendChild(document.createTextNode("#"));
+		}
+		tdNode = document.createElement("th");
+		trNode.appendChild(tdNode);
+		if (typeof params.headers[i] == "string")
+			headerTitle = params.headers[i] as string;
+		else {
+			headerTitle = (params.headers[i] as renderTableHeaderObject).title;
+			tdNode.setAttribute("style", (params.headers[i] as renderTableHeaderObject).style);
+		}
+		tdNode.appendChild(document.createTextNode(headerTitle));
+	}
+	if (params.data.length == 0) {
+		trNode = document.createElement("tr");
+		tblNode.appendChild(trNode);
+		tdNode = document.createElement("td");
+		trNode.appendChild(tdNode);
+		tdNode.setAttribute("colspan", params.headers.length.toString() + 1);
+		tdNode.appendChild(document.createTextNode("No items were marked for display in the table"));
+		tdNode.style.fontWeight = "bold";
+		tdNode.style.fontSize = "150%";
+		tdNode.style.color = "red";
+		return;
+	}
+	for (const item of params.data) {
+		trNode = document.createElement("tr");
+		tblNode.appendChild(trNode);
+		for (let i = 0; i < params.display.length; i++) {
+			if ((options & ADD_COUNTER) != 0 && i == counterColumn - 1) {
+				// this creates a left-size row column counter as an option
+				tdNode = document.createElement("th");
+				trNode.appendChild(tdNode);
+				tdNode.appendChild(document.createTextNode(counter.toString()));
+				counter++;
+			}
+			tdNode = document.createElement("td");
+			trNode.appendChild(tdNode);
+			// process the display functions
+			value = params.display[i](item);
+			if (typeof value == "string") {
+				if (value.search(/\$\$/) >= 0)
+					setCellValue(item, value, null);
+				else
+					tdNode.appendChild(document.createTextNode(value));
+			} else {
+				// value is object
+				if (typeof value.iValue == "string") {
+					if (value.iValue.search(/\$\$/) >= 0)
+						setCellValue(item, value.iValue, value.wrapLink!);
+					else
+						tdNode.appendChild(document.createTextNode(value.iValue));
+				} if (value.attrib.length > 0) {
+					let attribName: string,
+						attribVal: string;
+
+					const attribs = value.attrib.split(";;");
+					for (const attrib of attribs) {
+						[ attribName, attribVal ] = attrib.split("=");
+						switch (attribName) {
+						case "class":
+							tdNode.className = attribVal;
+							break;
+						case "id":
+							tdNode.id = attribVal;
+							break;
+						case "style":
+							tdNode.setAttribute("style", attribVal);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	function setCellValue(
+		item: unknown, 
+		value: string, 
+		wrapLink: string | null
+	) {
+		//  for "$$<object properties>"
+		let //index: string[],
+			//part: string | undefined,
+			vars: RegExpMatchArray | null;
+		const varsVals: string[] = [];
+
+			// extract the property string from any larger string
+		if ((vars = value.match(/\$\$[A-Za-z0-9]+/g)) != null)
+			for (const var$ of vars)
+				varsVals.push(item[var$.substring(2)]);
+		if (vars != null)
+			for (let i = 0; i < vars?.length; i++)
+				value = value.replace(vars[i], varsVals[i]);
+/*
+	  if ((index = (value).split(".")).length > 1) {
+		  cItem = item[index.shift() as string];
+		  while (typeof (part = index.shift()) !== "undefined")
+			  value = cItem[part];
+	  } else
+		  value = item[value]; */
+		if (wrapLink && wrapLink.length > 0) {
+			const anchor = document.createElement("a");
+			anchor.href = wrapLink;
+			anchor.target = "_blank";
+			anchor.appendChild(document.createTextNode(value));
+			tdNode.appendChild(anchor);
+		} else
+			tdNode.appendChild(document.createTextNode(value));
+	}
+}
+
 
 function replaceSpanText(
 	spanId: string, // id attrib of span to have text replaced
@@ -229,4 +439,88 @@ const charEntities: {[key: string]: string;} = {
 	"mu":     "\u03bc",  "nu":      "\u03bd", "xi":     "\u03be", "omicron": "\u03bf",
 	"pi":     "\u03c0",  "rho":     "\u03c1", "sigmaf": "\u03c2", "sigma":   "\u03c3",
 	"tau":    "\u03c4",  "upsilon": "\u03c5"
-}
+};
+
+class DataTable {
+	type: string;	// "tableObject"
+	tbody: HTMLTableSectionElement;
+	thead: HTMLTableSectionElement;
+
+	constructor() {
+		this.type = "tableObject";
+		this.tbody = document.createElement("tbody");
+		this.thead = document.createElement("thead");
+	}
+
+	getNode(which: "tbody" | "thead"): HTMLTableSectionElement | null {
+		return which == "tbody" ? this.tbody : which == "thead" ? this.thead : null;
+	}
+
+	getDOMnode(): HTMLTableElement {
+		const tableNode = document.createElement("table");
+		tableNode.appendChild(this.thead);
+		tableNode.appendChild(this.tbody);
+		return tableNode;
+	}
+
+	getRowCount(tbody: HTMLTableSectionElement): number {
+		return tbody.rows.length;
+	}
+	
+	getRowDOMNode(tbody: HTMLTableSectionElement, row: number): HTMLTableRowElement {
+		return tbody.rows[row];
+	}
+
+	appendRow(attributes: string[], tbody: HTMLTableSectionElement): number {
+		const row = tbody.insertRow();
+		for (const attrib of attributes) {
+			const [name, value] = attrib.split("=");
+			row.setAttribute(name, value);
+		}
+		return tbody.rows.length - 1;
+	}
+
+	deleteRow(tbody: HTMLTableSectionElement, row: HTMLTableRowElement): void {
+		tbody.removeChild(row);
+	}
+
+	getCellDOMNode(section: HTMLTableSectionElement, row: number, cell: number): HTMLTableCellElement {
+		return section.rows[row].cells[cell];
+	}
+
+	setCellContent(
+		row: number, 
+		cell: number, 
+		content: string | Node, 
+		isHTML: boolean, 
+		section: HTMLTableSectionElement
+	): void {
+		const cellNode = section.rows[row].cells[cell];
+		if (isHTML)
+			cellNode.innerHTML = content as string;
+		else
+			cellNode.appendChild(content as Node);
+	}
+
+	addTableSection(section: string): void {
+		const tableSection = document.createElement(section) as HTMLTableSectionElement;
+		if (section == "thead")
+			this.thead = tableSection;
+		else
+			this.tbody = tableSection;
+	}
+
+	appendCell(
+		row: number, 
+		cellType: number, 
+		attributes: string[], 
+		section: HTMLTableSectionElement
+	): number {
+		const cell = section.rows[row].insertCell(cellType);
+		for (const attrib of attributes) {
+			const [name, value] = attrib.split("=");
+			cell.setAttribute(name, value);
+		}
+		return section.rows[row].cells.length - 1;
+	}
+}	

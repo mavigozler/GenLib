@@ -1,6 +1,9 @@
 
 export { FSysPath, FSysItem, FileItem, DirItem, SrcDestCopy, NodeFsMulticopyElem, DirectoryTree };
 
+
+import { FSysItemType } from "./fsystem";
+
 type FSysPath = string;
 
 interface FileItem {
