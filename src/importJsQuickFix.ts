@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 import * as fs from "fs";
 import * as globPkg from "glob";
@@ -73,7 +73,7 @@ function contentChange(changeInfo: {
 			const contentChangeRead: Promise<string>[] = [];
 			for (let i = 0; i < files.length; i++) {
 				contentChangeRead.push(new Promise<string>((resolve) => {
-					fs.readFile(files[i], "utf8", (err: Error, content: string) => {
+					fs.readFile(files[i], "utf8", (err, content: string) => {
 						report += `\n======\nFile #${i + 1}:  fs.readFile('${files[i]}')`;
 						if (err) {
 							report += `\nERROR: ${err.message}`;
@@ -96,7 +96,7 @@ function contentChange(changeInfo: {
 							}
 					//		report (header);
 							if (changeCount > 0) {
-								fs.writeFile(files[i], content, "utf8", (err: Error) => {
+								fs.writeFile(files[i], content, "utf8", (err) => {
 									report += `\nFile #${i + 1}: writeFile(${files[i]}`;
 									if (err)
 										report += `\n  ERROR: writing file '${files[i]}'\n    ${err.message}\n`;

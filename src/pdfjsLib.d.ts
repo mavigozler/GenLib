@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 declare module "pdfjsLib" {
 	// Type definitions for PDF.js v2.7

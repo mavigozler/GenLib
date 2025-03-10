@@ -2,7 +2,8 @@
 
 export {
 	plainWindow,
-	rewriteWindow
+	rewriteWindow,
+	expandedWinOptions
 };
 /* NOTE that this function will attempt to determine if the
  arguments from 'title' to 'body_style' are either STRING type
@@ -11,7 +12,7 @@ export {
  to be DOM Object nodes and will be inserted into document
  using DOM function calls */
 
- type expandedWinOptions = {
+type expandedWinOptions = {
 	winTitle?: string,  // to be put on title bar
 	headerStyle?: string,  // CSS strings to be put in HEAD element
 	headerScript?: string,  // Javascript in the HEAD element

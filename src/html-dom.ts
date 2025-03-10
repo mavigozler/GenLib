@@ -1,9 +1,8 @@
-﻿"use strict";
-
+"use strict";
 
 export { getCheckedInput, setCheckedInput, removeChildren, replaceSpanText,
 	quickMarkupToDocObjects, makeSelectList, createRadioNode, renderTable,
-	DataTable 
+	DataTable, replaceAllChildren
  };
 
 type voidFunction = () => void;
@@ -71,6 +70,12 @@ function setCheckedInput(
 function removeChildren(htmlElem: HTMLElement) {
 	while (htmlElem.firstChild)
 		htmlElem.removeChild(htmlElem.firstChild);
+}
+
+function replaceAllChildren(node: HTMLElement, newMarkup: string) {
+	removeChildren(node);
+	node.innerHTML = newMarkup;
+	return node;
 }
 
 /**

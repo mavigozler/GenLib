@@ -24,10 +24,7 @@ export {
 	xhtmlMetaContentTypeAsXHTML,
 	xhtmlDocTypeDecl,
 	htmlMetaContentTypeAsHTML,
-	setThumbedImages,
-	thumbedImage,
-	getImage,
-	setDocWideBigImages
+	HtmlImgControl
 };
 
 const htmlDocTypeDecl = "<!DOCTYPE html\n" +
@@ -42,441 +39,535 @@ const xhtmlMetaContentTypeAsXHTML = "<meta http-equiv=\"Content-Type\" " +
 const htmlMetaContentTypeAsHTML = "<meta http-equiv=\"Content-Type\" " +
 	"content=\"text/html; charset=utf-8\">";
 
-/* resizeImage() forces a change in the size of the image to the
- * factor indicated
- * @param imgObj | instance of DOM img Object
- * @param factor | the factor by which to resize image in aspect
- * @return void
- */
+class HtmlImgControl {
+	imgWin: Window | null = null;  // recycle windows when possible
+	configInfo: unknown | null = null;
+	methodError: string = "";
 
-function resizeImage(
-	imgObj: HTMLImageElement,
-	factor: number
-): void {
-	const aspect = imgObj.height / imgObj.width;
-	if (typeof(imgObj) == "undefined" || typeof(factor) == "undefined")
-		return;
-	factor = Math.abs(factor);
-	if (aspect > 1) {
-		imgObj.width *= factor;
-		imgObj.height = imgObj.width * aspect;
-	} else {
-		imgObj.height *= factor;
-		imgObj.width = imgObj.height / aspect;
-	}
-}
-
-/*
-setThumbedImages() calls thumbedImage for all images with the 'class' attribute
-set to 'thumbImage' in the document body. this function had to be created
-because the 'onload' attribute is not permitted for the IMG element in the HTML
-specification, but is permitted for the document body or a frameset
-
-Normally, the image is thumbed by the class="..." value if it exceeds a
-certain size.  However, if the argument 'force' is set 'true', then
-the image will be resized whether or not it exceeds screen size
-*/
-
-function setThumbedImages(
-	docBody: HTMLBodyElement,
-	force?: boolean,
-	includePrompt?: boolean
-): void {
-
-	const calculationError = (message?: string) => {
-		const defaultMessage = "There was a calculation error, probably in CSS math";
-		if (message) {
-			console.log(message);
-			return message;
+	constructor() { }
+	/* resizeImage() forces a change in the size of the image to the
+	* factor indicated
+	* @param imgObj | instance of DOM img Object
+	* @param factor | the factor by which to resize image in aspect
+	* @return void
+	*/
+	public resizeImage(
+		imgObj: HTMLImageElement,
+		factor: number
+	): void {
+		this.methodError = "";
+		const aspect = imgObj.height / imgObj.width;
+		if (typeof(imgObj) == "undefined" || typeof(factor) == "undefined")
+			return;
+		factor = Math.abs(factor);
+		if (aspect > 1) {
+			imgObj.width *= factor;
+			imgObj.height = imgObj.width * aspect;
 		} else {
-			console.log(defaultMessage);
-			return defaultMessage;
+			imgObj.height *= factor;
+			imgObj.width = imgObj.height / aspect;
 		}
 	}
 
-	const imgSetRegex: RegExp = /[0-9]*\.?[0-9]+/;
-	let bodyImages: HTMLCollectionOf<HTMLImageElement> | null,
-		imgElem: HTMLImageElement,
-		classNames: string[],
-		styleElem: HTMLStyleElement,
-		htmlElems: HTMLCollectionOf<HTMLElement>,
-		factor: RegExpMatchArray | null,
-		promptSpan: HTMLSpanElement,
-		// imgStyle: CSSStyleDeclaration,
-		imgParent: HTMLParagraphElement | HTMLDivElement | HTMLSpanElement,
-		imgContain: HTMLDivElement,
-		computedFactor: CssValueDim | null;
-		//	imageDecColor: number,
-		// parentColor: string;
-	//	oldParentColor: string | null = null;
+	/*
+	setThumbedImages() calls thumbedImage for all images with the 'class' attribute
+	set to 'thumbImage' in the document body. this function had to be created
+	because the 'onload' attribute is not permitted for the IMG element in the HTML
+	specification, but is permitted for the document body or a frameset
 
+	Normally, the image is thumbed by the class="..." value if it exceeds a
+	certain size.  However, if the argument 'force' is set 'true', then
+	the image will be resized whether or not it exceeds screen size
+	*/
 
-	if (typeof includePrompt == "undefined")
-		includePrompt = false;
-	if ((htmlElems = document.getElementsByTagName("style")) == null ||
-				(htmlElems instanceof HTMLCollection == true && htmlElems.length == 0)) {
-		styleElem = document.createElement("style");
-		htmlElems = document.getElementsByTagName("head");
-		(htmlElems[0] as HTMLElement).appendChild(styleElem);
-	} else
-		styleElem = htmlElems[0] as HTMLStyleElement;
-	styleElem.appendChild(document.createTextNode(
-		".prompt-span {display:inline-block;color: blue;font: bold 9pt Tahoma,sans-serif;" +
-			"margin:0.25em 0 0.5em 0.5em;float:left;}"
-	));
+	public setThumbedImages(
+		docBody: HTMLBodyElement,
+		force?: boolean,
+		includePrompt?: boolean
+	): void {
 
-	if ((bodyImages = docBody.getElementsByTagName("img")) == null)
-		throw "there were no images found";
-	for (let i = 0; i < bodyImages.length; i++) {
-		imgElem = bodyImages[i];
-		// imgStyle = getComputedStyle(imgElem);
-		imgParent = imgElem.parentNode as HTMLElement;
-		if (includePrompt == true) {
-		//	parentColor = imgStyle.backgroundColor;
-
-			imgContain = document.createElement("div");
-			imgParent.insertBefore(imgContain, imgElem);
-			imgContain.style.margin = "0";
-			imgElem = imgParent.removeChild(imgElem);
-			imgElem = imgContain.appendChild(imgElem);
-			promptSpan = document.createElement("span");
-			promptSpan.className = "prompt-span";
-			/*
-			if (parentColor != oldParentColor) {
-				imageDecColor = ColorComponents.generateRandomContrastColor(parentColor, "cssColorString");
-				oldParentColor = parentColor;
+		const calculationError = (message?: string) => {
+			const defaultMessage = "There was a calculation error, probably in CSS math";
+			if (message) {
+				console.log(message);
+				return message;
 			} else {
-				imageDecColor = parentColor
-			} */
-			//	imgContain.style.borderColor = imageDecColor.toString();
-			imgContain.style.borderWidth = "1px";
-			imgContain.style.borderStyle = "solid";
-			imgContain.style.textAlign = "center";
-			promptSpan.appendChild(document.createTextNode("Click on the image to enlarge it in a new window"));
-			//	promptSpan.style.color = imageDecColor.toString();
-			imgContain.insertBefore(promptSpan, imgElem);
-			imgContain.insertBefore(document.createElement("br"), imgElem);
-		}
-		classNames = imgElem.className.split(/\s+/g);
-		imgElem.style.cursor = "pointer";
-		for (let j = 0; j < classNames.length; j++)
-			if (classNames[j].toLowerCase().search("thumbimage") >= 0) {
-				factor = classNames[j].match(imgSetRegex);
-				if (factor) {
-					if (force == true)
-						resizeImage(imgElem, Number(factor[0]));
-					else
-						thumbIfBig(imgElem, Number(factor[0]));
-					break;
-				} else {
-					const imgParentStyle: CSSStyleDeclaration = getComputedStyle(imgParent),
-						iCSS: iCss = new iCss();
-					let intermediate: string;
-
-					// no resizing value set; fit to parent padded width
-					intermediate = iCSS.doCssMath(MathOperation.CSS_MULTIPLY, -2, imgParentStyle.padding) ?? calculationError();
-					intermediate = iCSS.doCssMath(MathOperation.CSS_SUM, imgParentStyle.width, intermediate) ?? calculationError();
-					computedFactor = iCSS.extractValueDim(iCSS.doCssMath(
-						MathOperation.CSS_DIVIDE, intermediate, imgElem.width
-					) as string);
-					if (computedFactor != null && computedFactor.val < 1)
-						imgElem.width = computedFactor.val * imgElem.width;
-				}
+				console.log(defaultMessage);
+				return defaultMessage;
 			}
+		}
+
+		this.methodError = "";
+		const imgSetRegex: RegExp = /[0-9]*\.?[0-9]+/;
+		let bodyImages: HTMLCollectionOf<HTMLImageElement> | null,
+			imgElem: HTMLImageElement,
+			classNames: string[],
+			styleElem: HTMLStyleElement,
+			htmlElems: HTMLCollectionOf<HTMLElement>,
+			factor: RegExpMatchArray | null,
+			promptSpan: HTMLSpanElement,
+			// imgStyle: CSSStyleDeclaration,
+			imgParent: HTMLParagraphElement | HTMLDivElement | HTMLSpanElement,
+			imgContain: HTMLDivElement,
+			computedFactor: CssValueDim | null;
+			//	imageDecColor: number,
+			// parentColor: string;
+		//	oldParentColor: string | null = null;
+
+
+		if (typeof includePrompt == "undefined")
+			includePrompt = false;
+		if ((htmlElems = document.getElementsByTagName("style")) == null ||
+					(htmlElems instanceof HTMLCollection == true && htmlElems.length == 0)) {
+			styleElem = document.createElement("style");
+			htmlElems = document.getElementsByTagName("head");
+			(htmlElems[0] as HTMLElement).appendChild(styleElem);
+		} else
+			styleElem = htmlElems[0] as HTMLStyleElement;
+		styleElem.appendChild(document.createTextNode(
+			".prompt-span {display:inline-block;color: blue;font: bold 9pt Tahoma,sans-serif;" +
+				"margin:0.25em 0 0.5em 0.5em;float:left;}"
+		));
+
+		if ((bodyImages = docBody.getElementsByTagName("img")) == null)
+			throw "there were no images found";
+		for (let i = 0; i < bodyImages.length; i++) {
+			imgElem = bodyImages[i];
+			// imgStyle = getComputedStyle(imgElem);
+			imgParent = imgElem.parentNode as HTMLElement;
+			if (includePrompt == true) {
+			//	parentColor = imgStyle.backgroundColor;
+
+				imgContain = document.createElement("div");
+				imgParent.insertBefore(imgContain, imgElem);
+				imgContain.style.margin = "0";
+				imgElem = imgParent.removeChild(imgElem);
+				imgElem = imgContain.appendChild(imgElem);
+				promptSpan = document.createElement("span");
+				promptSpan.className = "prompt-span";
+				/*
+				if (parentColor != oldParentColor) {
+					imageDecColor = ColorComponents.generateRandomContrastColor(parentColor, "cssColorString");
+					oldParentColor = parentColor;
+				} else {
+					imageDecColor = parentColor
+				} */
+				//	imgContain.style.borderColor = imageDecColor.toString();
+				imgContain.style.borderWidth = "1px";
+				imgContain.style.borderStyle = "solid";
+				imgContain.style.textAlign = "center";
+				promptSpan.appendChild(document.createTextNode("Click on the image to enlarge it in a new window"));
+				//	promptSpan.style.color = imageDecColor.toString();
+				imgContain.insertBefore(promptSpan, imgElem);
+				imgContain.insertBefore(document.createElement("br"), imgElem);
+			}
+			classNames = imgElem.className.split(/\s+/g);
+			imgElem.style.cursor = "pointer";
+			for (let j = 0; j < classNames.length; j++)
+				if (classNames[j].toLowerCase().search("thumbimage") >= 0) {
+					factor = classNames[j].match(imgSetRegex);
+					if (factor) {
+						if (force == true)
+							this.resizeImage(imgElem, Number(factor[0]));
+						else
+							this.thumbIfBig(imgElem, Number(factor[0]));
+						break;
+					} else {
+						const imgParentStyle: CSSStyleDeclaration = getComputedStyle(imgParent),
+							iCSS: iCss = new iCss();
+						let intermediate: string;
+
+						// no resizing value set; fit to parent padded width
+						intermediate = iCSS.doCssMath(MathOperation.CSS_MULTIPLY, -2, imgParentStyle.padding) ?? calculationError();
+						intermediate = iCSS.doCssMath(MathOperation.CSS_SUM, imgParentStyle.width, intermediate) ?? calculationError();
+						computedFactor = iCSS.extractValueDim(iCSS.doCssMath(
+							MathOperation.CSS_DIVIDE, intermediate, imgElem.width
+						) as string);
+						if (computedFactor != null && computedFactor.val < 1)
+							imgElem.width = computedFactor.val * imgElem.width;
+					}
+				}
+		}
 	}
-}
 
-// img width = (img parent width - 2 * parent padding) / current img width (pixels) /
+	// img width = (img parent width - 2 * parent padding) / current img width (pixels) /
 
-/* thumbedImage() for IMG onload event to size the thumb form of an image
-   according to the screen resolution, but not the browser window
-   dimensions.  One should try to use a thumb already sized to what
-   it should be like */
+	/* thumbedImage() or thumbIfBig() for IMG onload event to size the thumb form of an image
+		according to the screen resolution, but not the browser window
+		dimensions.  One should try to use a thumb already sized to what
+		it should be like */
 
-function thumbedImage(imgObj: HTMLImageElement, screenProportion: number): void {
-	thumbIfBig(imgObj, screenProportion);
-}
-
-function thumbIfBig(imgObj: HTMLImageElement, screenProportion: number): void {
-	if (!imgObj)
-		throw "An image element must be passed as an argument to 'thumbIfBig()'";
-	if (typeof(screenProportion) == "undefined")
-		screenProportion = 1;
-	if (imgObj.height > screenProportion * screen.availHeight) 	{
-		imgObj.width *= screenProportion * screen.availHeight / imgObj.height;
-		imgObj.height = screenProportion * screen.availHeight;
+	/**
+	 * @method thumbedImage -- calls thumbIfBig() 
+	 * @param imgObj 
+	 * @param screenProportion 
+	 */
+	public thumbedImage(imgObj: HTMLImageElement, screenProportion: number): void {
+		this.methodError = "";
+		this.thumbIfBig(imgObj, screenProportion);
 	}
-	if (imgObj.width > screenProportion * screen.availWidth) {
-		imgObj.height *= screenProportion * screen.availWidth / imgObj.width;
-		imgObj.width = screenProportion * screen.availWidth;
+
+	/**
+	 * @method thumbIfBig -- 
+	 * @param imgObj 
+	 * @param screenProportion 
+	 */
+	private thumbIfBig(imgObj: HTMLImageElement, screenProportion: number): void {
+		this.methodError = "";
+		if (!imgObj) {
+			this.methodError = "An image element must be passed as an argument to 'thumbIfBig()'";
+			return;
+		}
+		if (typeof(screenProportion) == "undefined")
+			screenProportion = 1;
+		if (imgObj.height > screenProportion * screen.availHeight) 	{
+			imgObj.width *= screenProportion * screen.availHeight / imgObj.height;
+			imgObj.height = screenProportion * screen.availHeight;
+		}
+		if (imgObj.width > screenProportion * screen.availWidth) {
+			imgObj.height *= screenProportion * screen.availWidth / imgObj.width;
+			imgObj.width = screenProportion * screen.availWidth;
+		}
 	}
-}
 
-/* winHeight, and winWidth must be values between 0 and 1, and represent
-   the proportion the window is to the screen (0 = min, 1 = max, and
-   somewhere in between) */
+	/* winHeight, and winWidth must be values between 0 and 1, and represent
+		the proportion the window is to the screen (0 = min, 1 = max, and
+		somewhere in between) */
 
-function resizeImage2Screen(
-	imgObj: HTMLImageElement,
-	scrn: Screen,
-	resizeFactor: number
-): boolean {
-	const wratio: number = imgObj.width / scrn.availWidth,
-		hratio: number = imgObj.height / scrn.availHeight,
-		aspect: number = imgObj.width / imgObj.height;
-	if (typeof imgObj == "undefined" || imgObj == null)
-		throw "resizeImage2Screen() arg #1: img object instance undefined or null";
-	if (typeof scrn == "undefined" || scrn == null)
-		throw "resizeImage2Screen() arg #2: screen instance undefined or null";
-	if (typeof imgObj == "undefined" || imgObj == null)
-		throw "resizeImage2Screen() arg #3: resizeFactor float undefined or null" +
-			"a good default to use = 0.96";
-
-	if (wratio < 1.0 && hratio < 1.0)
-		return false;
-	if (wratio > hratio) {
-		imgObj.width *= (resizeFactor / wratio);
-		imgObj.height = imgObj.width / aspect;
-	} else {
-		imgObj.height *= (resizeFactor / hratio);
-		imgObj.width = imgObj.height * aspect;
+	/**
+	 * @method resizeImage2Screen -- this reduces an image larger than the screen to the screenn
+	 * @param imgObj 
+	 * @param scrn 
+	 * @param resizeFactor 
+	 * @returns {boolean}
+	 */
+	private resizeImage2Screen(
+		imgObj: HTMLImageElement,
+		scrn: Screen,
+		resizeFactor: number
+	): boolean {
+		this.methodError = "";
+		const wratio: number = imgObj.width / scrn.availWidth,
+			hratio: number = imgObj.height / scrn.availHeight,
+			aspect: number = imgObj.width / imgObj.height;
+		if (typeof imgObj == "undefined" || imgObj == null)
+			this.methodError = "resizeImage2Screen() arg #1: img object instance undefined or null";
+		if (typeof scrn == "undefined" || scrn == null)
+			this.methodError = "resizeImage2Screen() arg #2: screen instance undefined or null";
+		if (typeof imgObj == "undefined" || imgObj == null)
+			this.methodError = "resizeImage2Screen() arg #3: resizeFactor float undefined or null" +
+				"a good default to use = 0.96";
+		if (wratio < 1.0 && hratio < 1.0)
+			this.methodError = "image already fits within the screen; no resize necessary";
+		if (this.methodError.length > 0)
+			return false;
+		if (wratio > hratio) {
+			imgObj.width *= (resizeFactor / wratio);
+			imgObj.height = imgObj.width / aspect;
+		} else {
+			imgObj.height *= (resizeFactor / hratio);
+			imgObj.width = imgObj.height * aspect;
+		}
+		return true;
 	}
-	return true;
-}
 
-function resizeWin2Image(
-	imgObj: HTMLImageElement,
-	win: Window,
-	resizeFactor: number
-): void {
-	if (typeof imgObj == "undefined" || imgObj == null)
-		throw "resizeWin2Image() arg #1: img object instance undefined or null";
-	else if (typeof win == "undefined" || win == null)
-		throw "resizeWin2Image() arg #2: window instance undefined or null";
-	else if (!resizeFactor || resizeFactor == null)
-		throw "resizeWin2Image() arg #3: resizeFactor float undefined or null" +
-			"\na good default to use = 1.1";
-	win.resizeTo(imgObj.width * resizeFactor, imgObj.height * resizeFactor);
-}
-
-function getImage(url: string): Window | null {
-	return window.open(url);
-}
-
-/**
- *  Use docWideResize() to resize all images in the document
- *  to the parent container width of 100% and automatically make them clickable.
- *
- *  EXCEPTIONS:  to stop an image from being scripted in this way,
- *    put as a class attribute /class="no-js"/
- */
-
-function setDocWideBigImages(
-	document: Document,
-	styling: string
-): number {
-	const imageRefs: HTMLCollectionOf<HTMLImageElement> = document.getElementsByTagName("img"),
-		docImages: (HTMLImageElement | null)[] = [];
-	let clonedImage;
-
-	if (typeof imageRefs.item == "function")
-		for (let i = 0; i < imageRefs.length; i++)
-			if (imageRefs[i].className.search(/no-js/) < 0)
-				docImages.push(imageRefs.item(i));
-	for (let i = 0; i < docImages.length; i++) {
-		clonedImage = setImagePrompt(docImages[i] as HTMLImageElement, styling);
-		clonedImage.addEventListener("click", docWideBigImage, false);
+	/**
+	 * @method resizeWin2Image -- this will cause a window to be resized so thta it containns 
+	 * 	an unresized image
+	 * @param imgObj 
+	 * @param win 
+	 * @param resizeFactor 
+	 */
+	private resizeWin2Image(
+		imgObj: HTMLImageElement,
+		win: Window,
+		resizeFactor: number
+	): void {
+		this.methodError = "";
+		if (typeof imgObj == "undefined" || imgObj == null)
+			this.methodError = "resizeWin2Image() arg #1: img object instance undefined or null";
+		else if (typeof win == "undefined" || win == null)
+			this.methodError = "resizeWin2Image() arg #2: window instance undefined or null";
+		else if (!resizeFactor || resizeFactor == null)
+			this.methodError = "resizeWin2Image() arg #3: resizeFactor float undefined or null" +
+				"\na good default to use = 1.1";
+		win.resizeTo(imgObj.width * resizeFactor, imgObj.height * resizeFactor);
 	}
-	return docImages.length; // number of images processed
-}
 
-/* this is a handler */
-function docWideBigImage(evt: Event) {
-	if (evt.target)
-		return bigimage(evt.target as HTMLImageElement, true);
-	return bigimage(evt.currentTarget as HTMLImageElement, true);
-}
+	/**
+	 * @method getImage -- this will open a new window with the URL (it may not strictly be an image)
+	 * @param url 
+	 * @returns 
+	 */
+	getImage(url: string): Window | null {
+		return window.open(url);
+	}
 
-function setImagePrompt(
-	imgObj: HTMLImageElement,
-	styling: string
-): HTMLImageElement {
-	const parentNode: ParentNode = imgObj.parentNode as ParentNode,
-		divElem: HTMLDivElement = document.createElement("div"); // <div> </div>;
-	let clonedImageObj: HTMLImageElement;
+	/**
+	 *  Use docWideResize() to resize all images in the document
+	 *  to the parent container width of 100% and automatically make them clickable.
+	 *
+	 *  EXCEPTIONS:  to stop an image from being scripted in this way,
+	 *    put as a class attribute /class="no-js"/
+	 */
 
-	parentNode.appendChild(divElem);  // <parent><img><div></div></parent>
-	divElem.appendChild(clonedImageObj = (imgObj.cloneNode(true) as HTMLImageElement));
-	// <parent><img><div><imgClone></div></parent>
-	parentNode.removeChild(imgObj);
-	// <parent><div><imgClone></div></parent>
-	imgObj = clonedImageObj;
-	// <parent><div><img></div></parent>
-	if (typeof styling === "string")
-		divElem.setAttribute("style", styling);
-	imgObj.style.marginTop = "0";
-	imgObj.style.cursor = "pointer";
-	divElem.insertBefore(document.createTextNode(
-		"Click on image to obtain at original resolution in new window"), imgObj);
-	// <parent><div>Click text<img></div></parent>
-	divElem.insertBefore(document.createElement("br"), imgObj);
-	// <parent><div>Click text<br><img></div></parent>
-	return imgObj;
-}
+	/**
+	 * @method setDocWideBigImages -- 
+	 * @param document 
+	 * @param styling 
+	 * @returns 
+	 */
+	setDocWideBigImages(
+		document: Document,
+		styling: string
+	): number {
+		const imageRefs: HTMLCollectionOf<HTMLImageElement> = document.getElementsByTagName("img"),
+			docImages: (HTMLImageElement | null)[] = [];
+		let clonedImage;
+
+		if (typeof imageRefs.item == "function")
+			for (let i = 0; i < imageRefs.length; i++)
+				if (imageRefs[i].className.search(/no-js/) < 0)
+					docImages.push(imageRefs.item(i));
+		for (let i = 0; i < docImages.length; i++) {
+			clonedImage = this.setImagePrompt(docImages[i] as HTMLImageElement, styling);
+			clonedImage.addEventListener("click", this.docWideBigImage, false);
+		}
+		return docImages.length; // number of images processed
+	}
+
+	/* this is a handler */
+	/**
+	 * @method docWideBigImage
+	 * @param evt 
+	 * @returns 
+	 */
+	private docWideBigImage(evt: Event) {
+		if (evt.target)
+			return this.bigimage(evt.target as HTMLImageElement, true);
+		return this.bigimage(evt.currentTarget as HTMLImageElement, true);
+	}
+
+	/**
+	 * @method setImagePrompt -- 
+	 * @param imgObj 
+	 * @param styling 
+	 * @returns 
+	 */
+	private setImagePrompt(
+		imgObj: HTMLImageElement,
+		styling: string
+	): HTMLImageElement {
+		const parentNode: ParentNode = imgObj.parentNode as ParentNode,
+			divElem: HTMLDivElement = document.createElement("div"); // <div> </div>;
+		let clonedImageObj: HTMLImageElement;
+
+		parentNode.appendChild(divElem);  // <parent><img><div></div></parent>
+		divElem.appendChild(clonedImageObj = (imgObj.cloneNode(true) as HTMLImageElement));
+		// <parent><img><div><imgClone></div></parent>
+		parentNode.removeChild(imgObj);
+		// <parent><div><imgClone></div></parent>
+		imgObj = clonedImageObj;
+		// <parent><div><img></div></parent>
+		if (typeof styling === "string")
+			divElem.setAttribute("style", styling);
+		imgObj.style.marginTop = "0";
+		imgObj.style.cursor = "pointer";
+		divElem.insertBefore(document.createTextNode(
+			"Click on image to obtain at original resolution in new window"), imgObj);
+		// <parent><div>Click text<img></div></parent>
+		divElem.insertBefore(document.createElement("br"), imgObj);
+		// <parent><div>Click text<br><img></div></parent>
+		return imgObj;
+	}
 
 
-/* imgObj is the DOM image object
-    origRez is a boolean: if true, open a window immediately to the image's
-       original resolution;  if not set or false, then it jumps by intermediates */
-function bigimage(
-	imgObj: HTMLImageElement,
-	origRez: boolean
-) {
-	let nameParts: RegExpMatchArray | null,
-		filename: string;
+	/* imgObj is the DOM image object
+		origRez is a boolean: if true, open a window immediately to the image's
+			original resolution;  if not set or false, then it jumps by intermediates */
+	private bigimage(
+		imgObj: HTMLImageElement,
+		origRez: boolean
+	) {
+		let nameParts: RegExpMatchArray | null,
+			filename: string;
 
-	if (origRez == null || typeof(origRez) == "undefined")
-		origRez = false;
-	if ((nameParts = imgObj.src.match(/(.*)\/thumbs(.*)-thumb(.*)/)) == null)
-		filename = imgObj.src;
-	else
-		filename = nameParts[1] + nameParts[2] + nameParts[3];
-	if (origRez == true)
-		return (origImage(filename, imgObj.alt));
-	return (makeBigImage(filename, imgObj.alt));
-}
+		if (origRez == null || typeof(origRez) == "undefined")
+			origRez = false;
+		if ((nameParts = imgObj.src.match(/(.*)\/thumbs(.*)-thumb(.*)/)) == null)
+			filename = imgObj.src;
+		else
+			filename = nameParts[1] + nameParts[2] + nameParts[3];
+		if (origRez == true)
+			return (this.origImage(filename, imgObj.alt));
+		return (this.makeBigImage(filename, imgObj.alt));
+	}
 
-// this is a support function for bigimage()
-let imgWin: Window | null;  // recycle windows when possible
-function makeBigImage(
-	imgURL: string,
-	imageTitle: string
-) {
-	const winResize: number = 1.25,
-		imgResize: number = 0.80;
-	let paraElem: HTMLParagraphElement,
-		doc: Document,
-		spanElem: HTMLSpanElement;
+	private origImage(
+		imgURL: string,
+		imageTitle: string
+	): void {
+		let origwin: Window | null;
 
-	if (typeof imgURL != "string" || imgURL.length == 0)
-		throw "The argument for parameter 'imgURL' must be a string with a valid URL";
-	if (typeof imageTitle != "string" || imageTitle.length == 0)
-		imageTitle = "*** this image had no title ***";
-	imgWin = window.open("" /*window.location.href*/, "",
-		"resizable=no,scrollbars=no;,height=" +
-			screen.availHeight * 0.98 + ",width=" + screen.availWidth * 0.98);
-	if (imgWin == null)
-		throw "A child window could not be opened. Is there a restriction on pop-ups?";
-	(doc = imgWin.document).close();
-	const headElem = doc.getElementsByTagName("head")[0];
-	const titleElem = doc.createElement("title");
-	headElem.appendChild(titleElem);
-	titleElem.appendChild(doc.createTextNode(imageTitle));
-	const metaElem = doc.createElement("meta");
-	metaElem.setAttribute("html-equiv", "Content-Type");
-	metaElem.setAttribute("content", "text/html; charset=utf-8");
-	headElem.appendChild(metaElem);
-	if (typeof iCss == "undefined")
-		throw "iCss object is undefined:  is css.js included?";
-	/*   returnValue = iCSS.createStyleSheet(doc,
-   		"html{margin:0;} body{background-color:black;margin:0;} img {border:3px solid blue;}" +
-   		"\n .rez {color:red;font:bold 100% Verdana,Tahoma,Arial,sans-serif;}"); */
-	const bodyElem = doc.getElementsByTagName("body")[0];
+		this.methodError = "";
+		if ((origwin = window.open(imgURL, "", "resizable=yes,scrollbars=yes")) == null) {
+			this.methodError = "A child window could not be opened which is necessary. Incorrect URL?";
+			return;
+		}
+		const doc: Document = origwin.document;
+		doc.close();
+		const headElem: HTMLHeadElement = doc.getElementsByTagName("head")[0];
+		const titleElem: HTMLTitleElement = doc.createElement("title");
+		headElem.appendChild(titleElem);
+		titleElem.appendChild(doc.createTextNode("Original Size: " + imageTitle));
+		const metaElem: HTMLMetaElement = document.createElement("meta");
+		metaElem.setAttribute("html-equiv", "Content-Type");
+		metaElem.setAttribute("content", "text/html; charset=utf-8");
+		headElem.appendChild(metaElem);
+		if (typeof iCss == "undefined")
+			this.methodError = "iCss class is undefined:  is 'iCss.js' included?";
+		const iCSS: iCss = new iCss();
+		iCSS.createStyleSheet(doc,
+			"\nbody{background-color:black;}\nimg{border:3px solid blue;}");
+		const bodyElem: HTMLBodyElement = doc.getElementsByTagName("body")[0];
+		const divElem: HTMLDivElement = doc.createElement("div");
+		divElem.style.marginTop = "0";
+		divElem.style.textAlign = "center";
+		divElem.style.color = "white";
+		divElem.style.font = "bold 1em 'Courier New',Courier,monospace";
+		divElem.appendChild(doc.createTextNode(imageTitle));
+		divElem.appendChild(doc.createElement("br"));
+		const imgElem: HTMLImageElement = doc.createElement("img");
+		imgElem.src = imgURL;
+		imgElem.alt = "Big Goddam Image\n\nClick the right mouse button and select " +
+			"'Save Picture As...' to save this image to your hard disk\n" +
+			"\nURL=" + imgURL;
+		divElem.appendChild(imgElem);
+		bodyElem.appendChild(divElem);
+	}
 
-	paraElem = doc.createElement("p");
-	bodyElem.appendChild(paraElem);
-	paraElem.style.color = "yellow";
-	paraElem.appendChild(doc.createTextNode("Click image to show at original resolution: "));
+	// this is a support function for bigimage()
+	private	makeBigImage(
+		imgURL: string,
+		imageTitle: string
+	) {
+		const winResize: number = 1.25,
+			imgResize: number = 0.80;
+		let paraElem: HTMLParagraphElement,
+			doc: Document,
+			spanElem: HTMLSpanElement;
 
-	spanElem = doc.createElement("span");
-	spanElem.id = "origrez";
-	spanElem.className = "rez";
-	paraElem.appendChild(spanElem);
-	spanElem.appendChild(doc.createTextNode("\u00a0\u00a0current image resolution: "));
+		this.methodError = "";
+		if (typeof imgURL != "string" || imgURL.length == 0)
+			this.methodError = "The argument for parameter 'imgURL' must be a string with a valid URL";
+		if (typeof imageTitle != "string" || imageTitle.length == 0)
+			imageTitle = "*** this image had no title ***";
+		this.imgWin = window.open("" /*window.location.href*/, "",
+			"resizable=no,scrollbars=no;,height=" +
+				screen.availHeight * 0.98 + ",width=" + screen.availWidth * 0.98);
+		if (this.imgWin == null)
+			this.methodError = "A child window could not be opened. Is there a restriction on pop-ups?";
+		if (this.methodError.length > 0)
+			return;
+		(doc = this.imgWin!.document).close();
+		const headElem = doc.getElementsByTagName("head")[0];
+		const titleElem = doc.createElement("title");
+		headElem.appendChild(titleElem);
+		titleElem.appendChild(doc.createTextNode(imageTitle));
+		const metaElem = doc.createElement("meta");
+		metaElem.setAttribute("html-equiv", "Content-Type");
+		metaElem.setAttribute("content", "text/html; charset=utf-8");
+		headElem.appendChild(metaElem);
+		if (typeof iCss == "undefined")
+			this.methodError = "iCss object is undefined:  is css.js included?";
+		/*   returnValue = iCSS.createStyleSheet(doc,
+				"html{margin:0;} body{background-color:black;margin:0;} img {border:3px solid blue;}" +
+				"\n .rez {color:red;font:bold 100% Verdana,Tahoma,Arial,sans-serif;}"); */
+		const bodyElem = doc.getElementsByTagName("body")[0];
 
-	spanElem = doc.createElement("span");
-	spanElem.id = "currez";
-	spanElem.className = "rez";
-	paraElem.appendChild(spanElem);
-	spanElem.appendChild(doc.createTextNode(
-		"\u00a0\u00a0screen resolution: "));
+		paraElem = doc.createElement("p");
+		bodyElem.appendChild(paraElem);
+		paraElem.style.color = "yellow";
+		paraElem.appendChild(doc.createTextNode("Click image to show at original resolution: "));
 
-	spanElem = doc.createElement("span");
-	spanElem.className = "rez";
-	spanElem.appendChild(document.createTextNode(screen.width + "\u00d7" + screen.height));
-	paraElem.appendChild(spanElem);
+		spanElem = doc.createElement("span");
+		spanElem.id = "origrez";
+		spanElem.className = "rez";
+		paraElem.appendChild(spanElem);
+		spanElem.appendChild(doc.createTextNode("\u00a0\u00a0current image resolution: "));
 
-	paraElem = doc.createElement("p");
-	bodyElem.appendChild(paraElem);
-	paraElem.style.marginTop = "0";
-	paraElem.style.textAlign = "center";
-	paraElem.style.color = "white";
-	paraElem.style.font = "bold 1em 'Courier New',Courier,monospace";
-	paraElem.appendChild(doc.createTextNode(imageTitle));
+		spanElem = doc.createElement("span");
+		spanElem.id = "currez";
+		spanElem.className = "rez";
+		paraElem.appendChild(spanElem);
+		spanElem.appendChild(doc.createTextNode(
+			"\u00a0\u00a0screen resolution: "));
 
-	paraElem.appendChild(doc.createElement("br"));
+		spanElem = doc.createElement("span");
+		spanElem.className = "rez";
+		spanElem.appendChild(document.createTextNode(screen.width + "\u00d7" + screen.height));
+		paraElem.appendChild(spanElem);
 
-	const theImage = doc.createElement("img");
-	theImage.src = imgURL;
-	theImage.id = "the-Image";
-	theImage.alt = "Big Goddam Image\nClick the right mouse button and select " +
-		"'Save Picture As...' to save this image to your hard disk";
-	theImage.addEventListener("click",
-		function () {
-			return origImage(imgURL, imageTitle);
+		paraElem = doc.createElement("p");
+		bodyElem.appendChild(paraElem);
+		paraElem.style.marginTop = "0";
+		paraElem.style.textAlign = "center";
+		paraElem.style.color = "white";
+		paraElem.style.font = "bold 1em 'Courier New',Courier,monospace";
+		paraElem.appendChild(doc.createTextNode(imageTitle));
+
+		paraElem.appendChild(doc.createElement("br"));
+
+		const theImage = doc.createElement("img");
+		theImage.src = imgURL;
+		theImage.id = "the-Image";
+		theImage.alt = "Big Goddam Image\nClick the right mouse button and select " +
+			"'Save Picture As...' to save this image to your hard disk";
+		theImage.addEventListener("click", () => {
+			return this.origImage(imgURL, imageTitle);
 		}, false);
 
-	paraElem.appendChild(theImage);
+		paraElem.appendChild(theImage);
 
-	doc.getElementById("origrez")!.appendChild(doc.createTextNode(
-		theImage.width + " \u00d7 " + theImage.height
-	));
-	resizeImage2Screen(theImage, screen, imgResize);
-	resizeWin2Image(theImage, imgWin, winResize);
-	doc.getElementById("currez")!.appendChild(doc.createTextNode(
-		theImage.width + " \u00d7 " + theImage.height
-	));
+		doc.getElementById("origrez")!.appendChild(doc.createTextNode(
+			theImage.width + " \u00d7 " + theImage.height
+		));
+		this.resizeImage2Screen(theImage, screen, imgResize);
+		this.resizeWin2Image(theImage, this.imgWin!, winResize);
+		doc.getElementById("currez")!.appendChild(doc.createTextNode(
+			theImage.width + " \u00d7 " + theImage.height
+		));
+	}
+
+	readJsonConfig(jsonConfig: string): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			fetch(jsonConfig)
+			.then(response => response.json())
+			.then(data => {
+				this.configInfo = JSON.parse(data);
+				resolve();
+			}).catch(err => {
+				reject(err);
+			});
+		});
+	}
 }
 
-function origImage(
-	imgURL: string,
-	imageTitle: string
-): void {
-	let origwin: Window | null;
+/* Instantiate the class on loading 
 
-	if ((origwin = window.open(imgURL, "", "resizable=yes,scrollbars=yes")) == null)
-		throw "A child window could not be opened which is necessary. Incorrect URL?";
-	const doc: Document = origwin.document;
-	doc.close();
-	const headElem: HTMLHeadElement = doc.getElementsByTagName("head")[0];
-	const titleElem: HTMLTitleElement = doc.createElement("title");
-	headElem.appendChild(titleElem);
-	titleElem.appendChild(doc.createTextNode("Original Size: " + imageTitle));
-	const metaElem: HTMLMetaElement = document.createElement("meta");
-	metaElem.setAttribute("html-equiv", "Content-Type");
-	metaElem.setAttribute("content", "text/html; charset=utf-8");
-	headElem.appendChild(metaElem);
-	if (typeof iCss == "undefined")
-		throw "iCss class is undefined:  is 'iCss.js' included?";
-	const iCSS: iCss = new iCss();
-	iCSS.createStyleSheet(doc,
-		"\nbody{background-color:black;}\nimg{border:3px solid blue;}");
-	const bodyElem: HTMLBodyElement = doc.getElementsByTagName("body")[0];
-	const divElem: HTMLDivElement = doc.createElement("div");
-	divElem.style.marginTop = "0";
-	divElem.style.textAlign = "center";
-	divElem.style.color = "white";
-	divElem.style.font = "bold 1em 'Courier New',Courier,monospace";
-	divElem.appendChild(doc.createTextNode(imageTitle));
-	divElem.appendChild(doc.createElement("br"));
-	const imgElem: HTMLImageElement = doc.createElement("img");
-	imgElem.src = imgURL;
-	imgElem.alt = "Big Goddam Image\n\nClick the right mouse button and select " +
-		"'Save Picture As...' to save this image to your hard disk\n" +
-		"\nURL=" + imgURL;
-	divElem.appendChild(imgElem);
-	bodyElem.appendChild(divElem);
-}
+*/
+document.addEventListener("DOMContentLoaded", () => {
+	const htmlImgControl: HtmlImgControl = new HtmlImgControl();
+	htmlImgControl.readJsonConfig("bigImageConfig.json")
+	.then(() => {	// do something with the config data
+		htmlImgControl.setThumbedImages(document.body as HTMLBodyElement, true, true);	
+	}).catch(err => {	
+		console.log(err);
+	});
+});
+
+
+
 
 /* imgObj is the image object.  If null or undefined, an error is returned
    topFraction is a value 0->1 that is the starting point from the top

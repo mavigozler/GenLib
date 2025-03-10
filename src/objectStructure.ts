@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 /************************
  * objectStructure.ts  -- will find
  */
@@ -142,31 +142,31 @@ function findAncestorDomNode(parameters: {
 	let regex: RegExp | undefined;
 
 	if (parameters.searchClass)
-		 regex = new RegExp(parameters.searchClass);
+		regex = new RegExp(parameters.searchClass);
 	for (let targetNode = parameters.child; targetNode != null; targetNode = targetNode.parentNode as HTMLElement)
-		 if ((parameters.class || regex) && parameters.searchAttribute) {
-			  if (parameters.class) {
-					if (targetNode.nodeName.toLowerCase() == parameters.name &&
+		if ((parameters.class || regex) && parameters.searchAttribute) {
+			if (parameters.class) {
+				if (targetNode.nodeName.toLowerCase() == parameters.name &&
 									targetNode.className == parameters.class &&
 									targetNode.getAttribute(parameters.searchAttribute[0]) == parameters.searchAttribute[1])
-						 return targetNode;
-			  } else if (targetNode.nodeName.toLowerCase() == parameters.name && regex &&
-						 targetNode.className.search(regex) >= 0 &&
-						 targetNode.getAttribute(parameters.searchAttribute[0]) == parameters.searchAttribute[1])
 					return targetNode;
-		 } else if (parameters.class || regex) {
-			  if (parameters.class) {
-					if (targetNode.nodeName.toLowerCase() == parameters.name &&
+			} else if (targetNode.nodeName.toLowerCase() == parameters.name && regex &&
+						targetNode.className.search(regex) >= 0 &&
+						targetNode.getAttribute(parameters.searchAttribute[0]) == parameters.searchAttribute[1])
+				return targetNode;
+		} else if (parameters.class || regex) {
+			if (parameters.class) {
+				if (targetNode.nodeName.toLowerCase() == parameters.name &&
 									targetNode.className == parameters.class)
-						 return targetNode;
-			  } else if (targetNode.nodeName.toLowerCase() == parameters.name && regex &&
-						 targetNode.className.search(regex) >= 0)
 					return targetNode;
-		 } else if (parameters.searchAttribute) {
-			  if (targetNode.nodeName.toLowerCase() == parameters.name &&
-						 targetNode.getAttribute(parameters.searchAttribute[0]) == parameters.searchAttribute[1])
-					return targetNode;
-		 } else if (targetNode.nodeName.toLowerCase() == parameters.name)
-			  return targetNode;
+			} else if (targetNode.nodeName.toLowerCase() == parameters.name && regex &&
+						targetNode.className.search(regex) >= 0)
+				return targetNode;
+		} else if (parameters.searchAttribute) {
+			if (targetNode.nodeName.toLowerCase() == parameters.name &&
+						targetNode.getAttribute(parameters.searchAttribute[0]) == parameters.searchAttribute[1])
+				return targetNode;
+		} else if (targetNode.nodeName.toLowerCase() == parameters.name)
+			return targetNode;
 	return null;
 }

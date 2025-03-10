@@ -1,5 +1,3 @@
-﻿/* eslint-disable @typescript-eslint/no-unused-vars */
-
 /************************************************************
   dom-xml.js documentation is at the bottom of this document
 
@@ -13,9 +11,7 @@
    also include the 'css.js' script file!
  ********************************************************/
 /*
-if (typeof Node == "undefined") {
-	let Node = new Object();
-		// NodeType
+NodeType
 	Node.ELEMENT_NODE                   = 1;
 	Node.ATTRIBUTE_NODE                 = 2;
 	Node.TEXT_NODE                      = 3;
@@ -28,11 +24,11 @@ if (typeof Node == "undefined") {
 	Node.DOCUMENT_TYPE_NODE             = 10;
 	Node.DOCUMENT_FRAGMENT_NODE         = 11;
 	Node.NOTATION_NODE                  = 12;
-/*
-		readonly attribute DOMString        nodeName;
-		         attribute DOMString        nodeValue;
-		                                      // raises(DOMException) on setting
-		                                      // raises(DOMException) on retrieval
+
+readonly attribute DOMString   nodeName;
+attribute DOMString            nodeValue;
+	// raises(DOMException) on setting
+	// raises(DOMException) on retrieval
 		readonly attribute unsigned short   nodeType;
 		readonly attribute Node             parentNode;
 		readonly attribute NodeList         childNodes;
@@ -113,8 +109,7 @@ Extender ::= #x00B7 | #x02D0 | #x02D1 | #x0387 | #x0640 |
 	[#x30FC-#x30FE]
 */
 
-// eslint-disable-next-line prefer-const, @typescript-eslint/no-explicit-any
-let htmlDomData: any = {
+export const htmlDomData = {
 
 	combiningChar : [
 		["\u0300", "\u0345"],  ["\u0360", "\u0361"], ["\u0483", "\u0486"],
@@ -161,7 +156,8 @@ let htmlDomData: any = {
 			"sub", "sup", "span", "bdo", "applet", "font", "basefont", "iframe" ],
 		formctrl : [ "input", "select", "textarea", "label", "button" ],
 		heading : [ "h1", "h2", "h3", "h4", "h5", "h6" ],
-		list : [ "ul", "ol" ]
+		list : [ "ul", "ol" ],
+
 	},
 	/* tag status of elements */
 	nonEtagoElements : [ "input", "br", "img", "hr", "col", "frame",
@@ -232,19 +228,23 @@ let htmlDomData: any = {
 
 // htmlDomData.requiredEtagoElements.h = htmlDomData.elementClasses.heading;
 
-const hddInline = htmlDomData.elementClasses.inline = [
+htmlDomData.elementClasses.inline = [
 	htmlDomData.elementClasses.phrase,
 	htmlDomData.elementClasses.special,
 	htmlDomData.elementClasses.fontstyle,
 	htmlDomData.elementClasses.formctrl
 ];
 
-const hddBlock = htmlDomData.elementClasses.block = [
+const hddInline = htmlDomData.elementClasses.inline;
+
+htmlDomData.elementClasses.block = [
 	htmlDomData.elementClasses.heading,
 	htmlDomData.elementClasses.list,
 	"p", "pre", "dl", "div", "noscript", "blockquote", "form", "hr", "table",
 	"fieldset", "address", "center", "noframes"
 ];
+
+const hddBlock = htmlDomData.elementClasses.block;
 
 /* For each element, there are two arrays:  the first array shows the permitted
 elements, and the second are elements that are absolutely forbidden */
@@ -282,26 +282,23 @@ function convertCharEntityToUnicode(
 	charEntityAsString: string,
 	option?: boolean
 ): string | null {
-	let i, // loop index
-		matches,  // array returned from match() method call
-		matched,  // string being the matched part
-		count;  // count of items in htmlDomData.charEntities arrays
+	let matches: RegExpMatchArray | null,  // array returned from match() method call
+		matched: string,  // string being the matched part
+		count: number;  // count of items in htmlDomData.charEntities arrays
 	if (typeof charEntityAsString !== "string")
 		return null;
 	if (typeof option !== "undefined" && option === false) { // perform the opposite conversion
-		if ((matches = (charEntityAsString.trim()).match(/(\\u\x{4})/)) !== null) {
+		if ((matches = (charEntityAsString.trim()).match(/(\\u\\x{4})/)) !== null) {
 			matched = matches[1];
 			count = htmlDomData.charEntities.length;
-			for (i = 0; i < count; i += 2)
+			for (let i = 0; i < count; i += 2)
 				if (matched === htmlDomData.charEntities[i + 1])
 					return "&" + htmlDomData.charEntities[i] + ";";
-			matched = parseInt(matched, 16);
-			return "&#" + matched.toString(10) + ";";
+			return "&#" + parseInt(matched, 16).toString(10) + ";";
 		}
 	} else {
 		if ((matches = (charEntityAsString.trim()).match(/&#(\d{2,4});/)) !== null) {
-			matched = parseInt(matches[1], 10);
-			matched = matched.toString(16);
+			matched = parseInt(matches[1], 10).toString(16);
 			while (matched.length < 4)
 				matched = "0" + matched;
 			return "\\u" + matched;
@@ -385,7 +382,7 @@ function validDOMattributeValue (attributeValueName: string) {
 	return true;
 }
 
-const
+export const
 	ELEMENT_NODE					= 1,
 	ATTRIBUTE_NODE					= 2,
 	TEXT_NODE						= 3,
@@ -465,17 +462,6 @@ function getArrayOfStrings(obj: any): string[] | string | null {
 	return levelArray;
 }
 
-function removeChildren(node: HTMLElement): HTMLElement {
-	while (node.firstChild)
-		node.removeChild(node.firstChild);
-	return node;
-}
-
-function replaceAllChildren(node: HTMLElement, newMarkup: string) {
-	removeChildren(node);
-	node.innerHTML = newMarkup;
-	return node;
-}
 
 function placeMarkupHere(markup: string) { // by Martin Honnen
 	const ns = "http://www.w3.org/1999/xhtml";
@@ -1825,8 +1811,8 @@ const buildDocFrag = {
 	},
 
 	extractCommentNodes : function (markup: string) {
-		const comments = [];  // array for storing HTML comments found in document
-		let	commentsIndex = 0,  // comment enumerator
+		const comments: string[] = [];  // array for storing HTML comments found in document
+		let commentsIndex = 0,  // comment enumerator
 			commentsIndexString,  // the numerical index value as a string
 			comment, // holder for a found comment
 			commentSearchString,  // used to create a string looking for HTML comments
