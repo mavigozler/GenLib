@@ -95,7 +95,7 @@ class HtmlImgControl {
 				console.log(defaultMessage);
 				return defaultMessage;
 			}
-		}
+		};
 
 		this.methodError = "";
 		const imgSetRegex: RegExp = /[0-9]*\.?[0-9]+/;
@@ -115,7 +115,7 @@ class HtmlImgControl {
 		//	oldParentColor: string | null = null;
 
 
-		if (typeof includePrompt == "undefined")
+		if (!includePrompt)
 			includePrompt = false;
 		if ((htmlElems = document.getElementsByTagName("style")) == null ||
 					(htmlElems instanceof HTMLCollection == true && htmlElems.length == 0)) {
@@ -133,14 +133,32 @@ class HtmlImgControl {
 			throw "there were no images found";
 		for (let i = 0; i < bodyImages.length; i++) {
 			imgElem = bodyImages[i];
+	//		imgElem.style.width = "auto"; // ✅ Adjust width as needed 
+	//		imgElem.style.height = "auto"; // ✅ Maintain aspect ratio */
+			imgElem.style.display = "block"; // ✅ Ensures proper resizing */
+			imgElem.addEventListener("click", (evt: Event) => {
+				this.bigimage(evt.currentTarget as HTMLImageElement, true);
+			});
 			// imgStyle = getComputedStyle(imgElem);
 			imgParent = imgElem.parentNode as HTMLElement;
 			if (includePrompt == true) {
 			//	parentColor = imgStyle.backgroundColor;
 
 				imgContain = document.createElement("div");
-				imgParent.insertBefore(imgContain, imgElem);
+				imgContain.style.display = "inline-block";
+				imgContain.className = "img-container";
 				imgContain.style.margin = "0";
+				imgContain.style.borderWidth = "1px";
+				imgContain.style.borderStyle = "solid";
+				imgContain.style.textAlign = "center";
+				/*
+				imgContain.style.display = "flex";
+				imgContain.style.alignItems = "center";
+				imgContain.style.justifyContent = "center";
+				*/
+
+				imgParent.insertBefore(imgContain, imgElem);
+
 				imgElem = imgParent.removeChild(imgElem);
 				imgElem = imgContain.appendChild(imgElem);
 				promptSpan = document.createElement("span");
@@ -153,9 +171,7 @@ class HtmlImgControl {
 					imageDecColor = parentColor
 				} */
 				//	imgContain.style.borderColor = imageDecColor.toString();
-				imgContain.style.borderWidth = "1px";
-				imgContain.style.borderStyle = "solid";
-				imgContain.style.textAlign = "center";
+
 				promptSpan.appendChild(document.createTextNode("Click on the image to enlarge it in a new window"));
 				//	promptSpan.style.color = imageDecColor.toString();
 				imgContain.insertBefore(promptSpan, imgElem);
@@ -168,9 +184,9 @@ class HtmlImgControl {
 					factor = classNames[j].match(imgSetRegex);
 					if (factor) {
 						if (force == true)
-							this.resizeImage(imgElem, Number(factor[0]));
+							this.resizeImage(imgElem, parseFloat(factor[0]));
 						else
-							this.thumbIfBig(imgElem, Number(factor[0]));
+							this.thumbIfBig(imgElem, parseFloat(factor[0]));
 						break;
 					} else {
 						const imgParentStyle: CSSStyleDeclaration = getComputedStyle(imgParent),
@@ -544,7 +560,7 @@ class HtmlImgControl {
 			fetch(jsonConfig)
 			.then(response => response.json())
 			.then(data => {
-				this.configInfo = JSON.parse(data);
+				this.configInfo = data;
 				resolve();
 			}).catch(err => {
 				reject(err);
@@ -558,7 +574,7 @@ class HtmlImgControl {
 */
 document.addEventListener("DOMContentLoaded", () => {
 	const htmlImgControl: HtmlImgControl = new HtmlImgControl();
-	htmlImgControl.readJsonConfig("bigImageConfig.json")
+	htmlImgControl.readJsonConfig("./js/bigImageConfig.json")
 	.then(() => {	// do something with the config data
 		htmlImgControl.setThumbedImages(document.body as HTMLBodyElement, true, true);	
 	}).catch(err => {	
