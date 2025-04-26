@@ -61,7 +61,7 @@ function betaInverse(
  
 		while (true) {
 			term = term * temp * rx / (pp + ai);
-			betain = betain + term;
+			betain += term;
 			temp = Math.abs(term);
 			if (temp <= epsilon && temp <= epsilon * betain) 
 				break;
@@ -118,11 +118,11 @@ function StudentTprobability(
 	if (im2 < 2)
 		do { // DO 10 K = KS, IM2, 2
 			c = c * b * (fk - 1) / fk;
-			s = s + c;
+			s += c;
 			if (s == f)
 				break;
 			f = s
-			fk = fk + 2.0;
+			fk += 2.0;
 		} while (fk == ks);
 	if (ioe != 1)
 		return 0.5 + 0.5 * a * Math.sqrt(b) * s;

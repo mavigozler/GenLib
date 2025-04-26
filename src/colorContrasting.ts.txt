@@ -1,45 +1,47 @@
 "use strict";
 
-class ColorComponents {
-   colorNumerics: {
-      r: number;
-      g: number;
-      b: number;
-   } = {r: 0, g: 0, b: 0};
+interface ColorNumerics {
+	r: number;
+	g: number;
+	b: number;
+	a: number;
+}
+
+export class ColorComponents {
+   colorNumerics: ColorNumerics = {r: 0, g: 0, b: 0, a: 0};
 
    constructor(color: string | number) {
-		let colors: string[] = [ "r", "g", "b" ],
-         components;
+		const components: number[] = [];
 
 // colors are names, strings
       if (typeof color == "string") {
-         let strComponents: RegExpMatchArray | null = null;
+         let components$: RegExpMatchArray | null = null;
 
-         if (color.charAt(0) == "#") {
-            if (color.length == 7)
-               strComponents = color.toLowerCase().
-                  match(/^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])$/);
-            else if (color.length == 4) {
-               strComponents = color.toLowerCase().
-                  match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/);
-            }
-
-            if (strComponents == null || strComponents.length != 4)
-               throw "Parse of 'color' parameters does not yield 4 features";
-            else
-               for (let i = 1; i < 4; i++) {
-                  if (strComponents[i].length == 1)
-                     strComponents[i] = strComponents[i][0] + strComponents[i][0];
-                  this.colorNumerics[colors[i - 1] as keyof typeof this.colorNumerics] = parseInt(strComponents[i], 16);
-               }
+         if (color.charAt(0) == "#") { // color is hex as string
+				components$ = color.toLowerCase().match(/^#([0-9a-f]{8})|([0-9a-f]{7})|([0-9a-f]{6})$/);
+            if (components$ == null || components$[2])
+               throw Error("Parse of 'color' as string is not 3 or 4 byte hexadecimal");
+            else {
+					const components$$ = components$[1] || components$[3];
+               for (let i = 0; i < 3; i++)
+                  components.push(parseInt(components$$.substring(i * 2), 16));
+				}
          } else if (color.search(/rgb\(\d+/) >= 0) {
-            strComponents = color.match(/rgb\((\d+), (\d+), (\d+)\)/);
+            components$ = color.match(/rgb\((\d{1,3}),\s?(\d{1,3}),\s?(\d{1,3})(,\s?(\d{1,3}))?\)/);
+				if (components$ == null || !components$[1] || !components$[2] || !components$[3])
+               throw Error("Parse of 'color' as string in 'rgb()' format ");
+				
+				components[0] = parseInt(components$[1], 16);
+				components[1] = parseInt(components$[2], 16);
+				components[2] = parseInt(components$[3], 16);
+				if (components$.length > 4)
+					components[3] = parseInt(components$[1], 16);
          } else
             return; // no valid string offered!
-         components
+      //   components
       } else if (typeof color == "number") {
-         let workingColor: number,
-               components: number[] = [];
+         let workingColor: number;
+         const components: number[] = [];
 
          workingColor = color;
          for (let i = 2; i >= 0; i--) {
@@ -47,41 +49,43 @@ class ColorComponents {
             workingColor >>= 8;
          }
       } else
-         throw "Parameter 'color' is not type 'number' or 'string'";
+         throw Error("Parameter 'color' is not type 'number' or 'string'");
+		for (let i = 0; i < 3; i++)
+			if (components[i] && (components[i] < 0 || components[i] > 255))
+				throw Error("A color component [r, g, b] is out of range: 0 - 255 / #00 - #ff");
 
-      this.colorNumerics.r = Number(components[1]);
-      this.colorNumerics.g = Number(components[2]);
-      this.colorNumerics.b = Number(components[3]);
+      this.colorNumerics.r = components[0];
+      this.colorNumerics.g = components[1];
+      this.colorNumerics.b = components[2];
+		this.colorNumerics.a = components[3];
    }
 	toCssRgbHexadecimalString() {
-		var hexDigits = "";
-		for (var i = 0; i < 3; i++) {
-			if (this[colors[i]] < 16)
-				hexDigits += "0";
-			hexDigits += this[colors[i]].toString(16);
-		}
+		let hexDigits = "";
+		for (const key in this.colorNumerics)
+			if (Object.prototype.hasOwnProperty.call(this.colorNumerics, key))
+				hexDigits += this.colorNumerics[key as keyof ColorNumerics].toString(16);
 		return ("#" + hexDigits.toLowerCase());
 	}
 	toCssRgbGroupedDecimalString() {
-		return ("rgb(" + this.red.toString().toLowerCase() + ", " +
-				this.green.toString().toLowerCase() + ", " +
-				this.blue.toString().toLowerCase() + ")");
+		return ("rgb(" + this.colorNumerics.r.toString(16).toLowerCase() + ", " +
+				this.colorNumerics.g.toString(16).toLowerCase() + ", " +
+				this.colorNumerics.b.toString(16).toLowerCase() + ")");
 	};
 	toCssRgbGroupedPercentageString() {
-		return ("rgb(" + Math.round(this.red/255*100).toString().toLowerCase() + "%, " +
-				Math.round(this.green/255*100).toString().toLowerCase() + "%, " +
-				Math.round(this.blue/255*100).toString().toLowerCase() + "%)");
+		return ("rgb(" + Math.round(this.colorNumerics.r/255*100).toString().toLowerCase() + "%, " +
+				Math.round(this.colorNumerics.g/255*100).toString().toLowerCase() + "%, " +
+				Math.round(this.colorNumerics.b/255*100).toString().toLowerCase() + "%)");
 	};
 
-   getColorBrightness(theColor: ColorComponents): number {
-      return ((theColor.red * 299 + theColor.green * 587 +
-         theColor.blue * 114) / 1000);
+   getColorBrightness(theColor: ColorNumerics): number {
+      return ((theColor.r * 299 + theColor.g * 587 +
+         theColor.b * 114) / 1000);
    }
 
-   getColorDifference(color1: ColorComponents, color2: ColorComponents): number {
-      return (Math.max(color1.red, color2.red) - Math.min(color1.red, color2.red) +
-            Math.max(color1.green, color2.green) - Math.min(color1.green, color2.green) +
-            Math.max(color1.red, color2.blue) - Math.min(color1.red, color2.blue));
+   getColorDifference(color1: ColorNumerics, color2: ColorNumerics): number {
+      return (Math.max(color1.r, color2.r) - Math.min(color1.r, color2.r) +
+            Math.max(color1.g, color2.g) - Math.min(color1.g, color2.g) +
+            Math.max(color1.r, color2.b) - Math.min(color1.r, color2.b));
    }
 
 /* color1 is the color to provide */
@@ -93,7 +97,7 @@ class ColorComponents {
    ) {
       /* 1. Evaluate color brightness of two colors.  If difference >= 125, pass
          2. If color difference--distinct from brightness difference--is >= 500, pass */
-      let setColors: boolean[] = [ false, false, false ],
+      const setColors: boolean[] = [ false, false, false ],
          color2: ColorComponents = new ColorComponents("#ffffff"),
          colorDominances: string[] = [ "red", "green", "blue" ];
       do {

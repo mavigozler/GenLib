@@ -1,16 +1,16 @@
 "use strict";
 
 export { getCheckedInput, setCheckedInput, removeChildren, replaceSpanText,
-	quickMarkupToDocObjects, makeSelectList, createRadioNode, renderTable,
+	quickMarkupToDocObjects, makeSelectList, createRadioNode, // renderTable,
 	DataTable, replaceAllChildren
  };
 
 type voidFunction = () => void;
 
-type renderTableHeaderObject = {
-	title: string;
-	style: string;
-};
+//type renderTableHeaderObject = {
+//	title: string;
+//	style: string;
+//};
 
 /**
  * @function getCheckedInput -- returns the value of a named HTML input object representing radio choices
@@ -94,7 +94,7 @@ function makeSelectList(
 ): HTMLSelectElement {
 	let i,
 		optionElem: HTMLOptionElement;
-/*
+
 	if (selAttribs != null && selAttribs instanceof Array == false)
 		throw "makeSelectList(): attributes for <select> element must be string array";
 	if (optVals != null && optVals instanceof Array == false)
@@ -102,7 +102,7 @@ function makeSelectList(
 	if (optText instanceof Array == false)
 		throw "makeSelectList(): text for options if present must be string array";
 	if  (optVals.length > 1 && optVals.length != optText.length)
-		throw "makeSelectList(): the values and text for <option> element must be equal"; */
+		throw "makeSelectList(): the values and text for <option> element must be equal"; 
 	const selectElem = document.createElement("select");
 	if (selAttribs)
 		for (const property in selAttribs) {
@@ -148,6 +148,7 @@ function makeSelectList(
  *      .attach: the form node to attach the table to
  *      .options: string[]
  */
+/*
 function renderTable(params: {
 		headers: (string | renderTableHeaderObject)[];
 		display: ((arg?: unknown) => string |
@@ -307,17 +308,17 @@ function renderTable(params: {
 			// extract the property string from any larger string
 		if ((vars = value.match(/\$\$[A-Za-z0-9]+/g)) != null)
 			for (const var$ of vars)
-				varsVals.push(item[var$.substring(2)]);
+				varsVals.push((item as string)[var$.substring(2)]);
 		if (vars != null)
 			for (let i = 0; i < vars?.length; i++)
 				value = value.replace(vars[i], varsVals[i]);
-/*
+
 	  if ((index = (value).split(".")).length > 1) {
 		  cItem = item[index.shift() as string];
 		  while (typeof (part = index.shift()) !== "undefined")
 			  value = cItem[part];
 	  } else
-		  value = item[value]; */
+		  value = item[value]; 
 		if (wrapLink && wrapLink.length > 0) {
 			const anchor = document.createElement("a");
 			anchor.href = wrapLink;
@@ -326,9 +327,9 @@ function renderTable(params: {
 			tdNode.appendChild(anchor);
 		} else
 			tdNode.appendChild(document.createTextNode(value));
-	}
+	} 
 }
-
+*/
 
 function replaceSpanText(
 	spanId: string, // id attrib of span to have text replaced
@@ -402,17 +403,13 @@ function quickMarkupToDocObjects(markup: string, doc: Document): DocumentFragmen
 				workingElem = workingElem.parentNode as HTMLElement;
 				elemLevel--;
 			}
-		} else if (inTag == true) { // attr
-			if (typeof workingElem !== "undefined") {
-				const attribPair = item.split("=");
-				workingElem.setAttribute(attribPair[0], attribPair[1]);
-			}
-		} else { // inTag == false
-			if (elemLevel > 0)
-				workingElem?.appendChild(doc.createTextNode(item));
-			else
-				docFrag.appendChild(doc.createTextNode(item));
-		}
+		} else if (inTag == true && typeof workingElem !== "undefined") {
+			const attribPair = item.split("=");
+			workingElem.setAttribute(attribPair[0], attribPair[1]);
+		} else if (elemLevel > 0)
+			workingElem?.appendChild(doc.createTextNode(item));
+		else
+			docFrag.appendChild(doc.createTextNode(item));
 	return docFrag;
 }
 

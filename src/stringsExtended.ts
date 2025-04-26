@@ -12,6 +12,8 @@ export {
 };
 
 function string2RE(str: string): RegExp {
+	if (typeof str !== "string")
+		throw new TypeError(`Expected a string as input -- type given was '${typeof str}'`);
 	return new RegExp(str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 }
 

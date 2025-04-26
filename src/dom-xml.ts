@@ -109,10 +109,47 @@ Extender ::= #x00B7 | #x02D0 | #x02D1 | #x0387 | #x0640 |
 	[#x30FC-#x30FE]
 */
 
-export const htmlDomData = {
+// Define the type for combining characters, digits, and extenders
+type CharRange = string | [string, string];
 
-	combiningChar : [
-		["\u0300", "\u0345"],  ["\u0360", "\u0361"], ["\u0483", "\u0486"],
+// Define the structure for element classes
+interface ElementClasses {
+  fontstyle: string[];
+  phrase: string[];
+  special: string[];
+  formctrl: string[];
+  heading: string[];
+  list: string[];
+  inline: string[];
+  block: string[];
+}
+
+// Define the structure for required end tag elements
+interface RequiredEtagoElements {
+  [key: string]: string[];
+}
+
+// Define the main structure of htmlDomData
+interface HtmlDomData {
+  combiningChar: CharRange[];
+  digit: [string, string][];
+  extender: CharRange[];
+  elementClasses: ElementClasses;
+  nonEtagoElements: string[];
+  requiredEtagoElements: RequiredEtagoElements;
+  deprecatedElements: string[];
+  looseStandardElements: string[];
+  legalContainingElements: {[key:string]: {[key: string]: (string | object)[] }}
+  optionalEtagoElements: string[];
+  impliedElements: string[];
+  charEntities: string[];
+}
+
+import { iCss} from "@GenLib/iCss";
+
+export const htmlDomData: HtmlDomData = {
+	combiningChar: [
+		["\u0300", "\u0345"], ["\u0360", "\u0361"], ["\u0483", "\u0486"],
 		["\u0591", "\u05A1"], ["\u05A3", "\u05B9"], ["\u05BB", "\u05BD"], "\u05BF",
 		["\u05C1", "\u05C2"], "\u05C4", ["\u064B", "\u0652"], "\u0670", ["\u06D6", "\u06DC"],
 		["\u06DD", "\u06DF"], ["\u06E0", "\u06E4"], ["\u06E7", "\u06E8"], ["\u06EA", "\u06ED"],
@@ -136,113 +173,115 @@ export const htmlDomData = {
 		"\u20E1", ["\u302A", "\u302F"], "\u3099", "\u309A"
 	],
 
-	digit :  [
+	digit: [
 		["\u0030", "\u0039"], ["\u0660", "\u0669"], ["\u06F0", "\u06F9"],
 		["\u0966", "\u096F"], ["\u09E6", "\u09EF"], ["\u0A66", "\u0A6F"], ["\u0AE6", "\u0AEF"],
 		["\u0B66", "\u0B6F"], ["\u0BE7", "\u0BEF"], ["\u0C66", "\u0C6F"], ["\u0CE6", "\u0CEF"],
 		["\u0D66", "\u0D6F"], ["\u0E50", "\u0E59"], ["\u0ED0", "\u0ED9"], ["\u0F20", "\u0F29"]
 	],
 
-	extender : [
+	extender: [
 		"\u00B7", "\u02D0", "\u02D1", "\u0387", "\u0640",
 		"\u0E46", "\u0EC6", "\u3005", ["\u3031", "\u3035"], ["\u309D", "\u309E"],
 		["\u30FC", "\u30FE"]
 	],
 
-	elementClasses : {
-		fontstyle : [ "tt", "i", "b", "big", "small", "u", "s", "strike" ],
-		phrase : [ "em", "strong", "dfn", "code", "samp", "kbd", "var", "cite", "abbr", "acronym" ],
-		special : [ "a", "img", "object", "br", "script", "map", "q",
-			"sub", "sup", "span", "bdo", "applet", "font", "basefont", "iframe" ],
-		formctrl : [ "input", "select", "textarea", "label", "button" ],
-		heading : [ "h1", "h2", "h3", "h4", "h5", "h6" ],
-		list : [ "ul", "ol" ],
-
+	elementClasses: {
+		fontstyle: ["tt", "i", "b", "big", "small", "u", "s", "strike"],
+		phrase: ["em", "strong", "dfn", "code", "samp", "kbd", "var", "cite", "abbr", "acronym"],
+		special: ["a", "img", "object", "br", "script", "map", "q",
+			"sub", "sup", "span", "bdo", "applet", "font", "basefont", "iframe"],
+		formctrl: ["input", "select", "textarea", "label", "button"],
+		heading: ["h1", "h2", "h3", "h4", "h5", "h6"],
+		list: ["ul", "ol"],
+		inline: [],
+		block: []
 	},
 	/* tag status of elements */
-	nonEtagoElements : [ "input", "br", "img", "hr", "col", "frame",
-		"meta", "link", "param", "base", "basefont", "area", "isindex" ],
+	nonEtagoElements: ["input", "br", "img", "hr", "col", "frame",
+		"meta", "link", "param", "base", "basefont", "area", "isindex"],
 
-	requiredEtagoElements : {
-		a: [ "a" , "area", "applet", "address", "abbr", "acronym" ],
-		b: [ "b", "button", "body", "blockquote", "big", "bdo" ],
-		c: [ "center", "caption", "cite", "code" ],
-		d: [ "div", "dfn", "dl", "del", "dir" ],
-		e: [ "em" ],
-		f: [ "form", "font", "fieldset" ],
-		i: [ "i", "iframe", "ins", "inindex" ],
-		k: [ "kbd" ],
-		l: [ "label", "legend" ],
-		m: [ "map", "menu" ],
-		n: [ "noscript", "noframes" ],
-		o: [ "ol", "optgroup", "object" ],
-		p: [ "pre" ],
-		q: [ "q" ],
-		s: [ "span", "strong", "sub", "sup", "script", "select", "style",
-			"small", "samp", "strike", "s" ],
-		t: [ "table" , "textarea", "title", "tt" ],
-		u: [ "ul", "u" ],
-		v: [ "var" ]
+	requiredEtagoElements: {
+		a: ["a", "area", "applet", "address", "abbr", "acronym"],
+		b: ["b", "button", "body", "blockquote", "big", "bdo"],
+		c: ["center", "caption", "cite", "code"],
+		d: ["div", "dfn", "dl", "del", "dir"],
+		e: ["em"],
+		f: ["form", "font", "fieldset"],
+		i: ["i", "iframe", "ins", "inindex"],
+		k: ["kbd"],
+		l: ["label", "legend"],
+		m: ["map", "menu"],
+		n: ["noscript", "noframes"],
+		o: ["ol", "optgroup", "object"],
+		p: ["pre"],
+		q: ["q"],
+		s: ["span", "strong", "sub", "sup", "script", "select", "style",
+			"small", "samp", "strike", "s"],
+		t: ["table", "textarea", "title", "tt"],
+		u: ["ul", "u"],
+		v: ["var"]
 	},
 
-	deprecatedElements : [
+	deprecatedElements: [
 		"applet", "basefont", "center", "dir", "font", "isindex", "menu",
 		"u", "s", "strike"
 	],
 
-	looseStandardElements : [
+	looseStandardElements: [
 		"applet", "basefont", "center", "dir", "font", "iframe", "isindex",
-		"menu",	"u", "s", "strike"
+		"menu", "u", "s", "strike"
 	],
 
-	optionalEtagoElements : [ "p", "tr", "td" , "th", "li",
-		"colgroup" , "option", "dd", "dt", "thead", "tfoot" ],
+	optionalEtagoElements: ["p", "tr", "td", "th", "li",
+		"colgroup", "option", "dd", "dt", "thead", "tfoot"],
 
-	impliedElements : [ "tbody", "head", "html" ],
+	impliedElements: ["tbody", "head", "html"],
 
-	charEntities :
-		[  "nbsp"  , "\u00a0",    "cent"  , "\u00a2",   "sect"  , "\u00a7",
-			"uml"  ,  "\u00a8",    "copy"  , "\u00a9",   "deg"   , "\u00b0",
-			"plusmn", "\u00b1",    "micro" , "\u00b5",   "frac14", "\u00bc",
-			"frac12", "\u00bd",    "frac34", "\u00be",   "times" , "\u00d7",
-			"divide", "\u00f7",    "bull"  , "\u2022",   "prime" , "\u2032",
-			"larr"  , "\u2190",    "rarr"  , "\u2192",   "sum"   , "\u2211",
-			"minus" , "\u2212",    "radic" , "\u221a",   "infin" , "\u221e",
-			"ne"    , "\u2260",    "le"    , "\u2264",   "ge"    , "\u2265",
-			"quot"  , "\u0022",    "amp"   , "\u0026",   "lt"    , "\u003c",
-			"gt"    , "\u003e",    "mdash" , "\u2014",   "lsquo" , "\u2018",
-			"rsquo" , "\u2019",    "ldquo" , "\u201c",   "rdquo" , "\u201d",
-			"euro"  , "\u20ac",    "permil", "\u2030",   "uuml",   "\u00fc",
-			"Uuml"  , "\u00dc",    "Ouml",   "\u00d6",   "ouml",   "\u00f6",
-			"ntilde", "\u00f1",    "eacute", "\u00e9",   "oacute", "\u00f3",
-			"ccedil", "\u00e7",	  "Ccedil", "\u00c7",   "Alpha",  "\u0391",
-			"alpha",  "\u03b1",    "beta",   "\u03b2",   "gamma",  "\u03b3",
-			"delta",  "\u03b4",	  "epsilon","\u03b5",   "zeta",   "\u03b6",
-			"eta",    "\u03b7",    "theta",  "\u03b8",   "iota",   "\u03b9",
-			"kappa",  "\u03ba",    "lambda", "\u03bb",   "mu",     "\u03bc",
-			"nu",     "\u03bd",    "xi",     "\u03be",   "omicron","\u03bf",
-			"pi",     "\u03c0",    "rho",    "\u03c1",   "sigmaf", "\u03c2",
-			"sigma",  "\u03c3",    "tau",    "\u03c4",   "upsilon","\u03c5"
-		]
+	charEntities: ["nbsp", "\u00a0", "cent", "\u00a2", "sect", "\u00a7",
+		"uml", "\u00a8", "copy", "\u00a9", "deg", "\u00b0",
+		"plusmn", "\u00b1", "micro", "\u00b5", "frac14", "\u00bc",
+		"frac12", "\u00bd", "frac34", "\u00be", "times", "\u00d7",
+		"divide", "\u00f7", "bull", "\u2022", "prime", "\u2032",
+		"larr", "\u2190", "rarr", "\u2192", "sum", "\u2211",
+		"minus", "\u2212", "radic", "\u221a", "infin", "\u221e",
+		"ne", "\u2260", "le", "\u2264", "ge", "\u2265",
+		"quot", "\u0022", "amp", "\u0026", "lt", "\u003c",
+		"gt", "\u003e", "mdash", "\u2014", "lsquo", "\u2018",
+		"rsquo", "\u2019", "ldquo", "\u201c", "rdquo", "\u201d",
+		"euro", "\u20ac", "permil", "\u2030", "uuml", "\u00fc",
+		"Uuml", "\u00dc", "Ouml", "\u00d6", "ouml", "\u00f6",
+		"ntilde", "\u00f1", "eacute", "\u00e9", "oacute", "\u00f3",
+		"ccedil", "\u00e7", "Ccedil", "\u00c7", "Alpha", "\u0391",
+		"alpha", "\u03b1", "beta", "\u03b2", "gamma", "\u03b3",
+		"delta", "\u03b4", "epsilon", "\u03b5", "zeta", "\u03b6",
+		"eta", "\u03b7", "theta", "\u03b8", "iota", "\u03b9",
+		"kappa", "\u03ba", "lambda", "\u03bb", "mu", "\u03bc",
+		"nu", "\u03bd", "xi", "\u03be", "omicron", "\u03bf",
+		"pi", "\u03c0", "rho", "\u03c1", "sigmaf", "\u03c2",
+		"sigma", "\u03c3", "tau", "\u03c4", "upsilon", "\u03c5"
+	],
+
+	legalContainingElements: {}
 };
 
 // htmlDomData.requiredEtagoElements.h = htmlDomData.elementClasses.heading;
 
-htmlDomData.elementClasses.inline = [
-	htmlDomData.elementClasses.phrase,
-	htmlDomData.elementClasses.special,
-	htmlDomData.elementClasses.fontstyle,
-	htmlDomData.elementClasses.formctrl
-];
+htmlDomData.elementClasses.inline = {
+	...htmlDomData.elementClasses.phrase, 
+	...htmlDomData.elementClasses.special,
+	...htmlDomData.elementClasses.fontstyle,
+	...htmlDomData.elementClasses.formctrl
+}; 
 
 const hddInline = htmlDomData.elementClasses.inline;
 
-htmlDomData.elementClasses.block = [
-	htmlDomData.elementClasses.heading,
-	htmlDomData.elementClasses.list,
-	"p", "pre", "dl", "div", "noscript", "blockquote", "form", "hr", "table",
-	"fieldset", "address", "center", "noframes"
-];
+htmlDomData.elementClasses.block = {
+	...htmlDomData.elementClasses.heading,
+	...htmlDomData.elementClasses.list,
+	...[ "p", "pre", "dl", "div", "noscript", "blockquote", "form", "hr", "table",
+	"fieldset", "address", "center", "noframes" ]
+};
 
 const hddBlock = htmlDomData.elementClasses.block;
 
@@ -305,7 +344,7 @@ function convertCharEntityToUnicode(
 		}	else if ((matches = ((charEntityAsString.trim()).match(/&(\w{2,8});/))) !== null) {
 			matched = matches[1];
 			count = htmlDomData.charEntities.length;
-			for (i = 0; i < count; i += 2)
+			for (let i = 0; i < count; i += 2)
 				if (matched === htmlDomData.charEntities[i])
 					return htmlDomData.charEntities[i + 1];
 		}
@@ -313,11 +352,11 @@ function convertCharEntityToUnicode(
 	return null;
 }
 
-function convertUnicodeToCharEntity(unicodeCharAsString: string) {
+export function convertUnicodeToCharEntity(unicodeCharAsString: string) {
 	return convertCharEntityToUnicode(unicodeCharAsString, false);
 }
 
-function convertAllCharEntityToUnicode(stringWithCharEntities: string): string {
+export function convertAllCharEntityToUnicode(stringWithCharEntities: string): string {
 	const charEntityRE = /(&#\d{2,4};|&\w{2,8};)/;
 	let matched, // returned array of match() method
 		newString = "";
@@ -332,7 +371,7 @@ function convertAllCharEntityToUnicode(stringWithCharEntities: string): string {
 
 /* this taken from  Snook (2007) Accelerated DOM Scripting with Ajax,
    APIs, and Libraries,  Apress  */
-function getElementsByClassName(node: HTMLElement, className: string) {
+export function getElementsByClassName(node: HTMLElement, className: string) {
 	const classNodes = [],
 		classFilter = new RegExp("(^| )" + className + "( |$)"),
 		allDocNodes = node.getElementsByTagName("*");
@@ -344,7 +383,7 @@ function getElementsByClassName(node: HTMLElement, className: string) {
 }
 
 function extensiveNameCharCheck(theChar: string) {
-	const validChars = [ htmlDomData.combiningChar, htmlDomData.Digit, htmlDomData.Extender ];
+	const validChars = [ htmlDomData.combiningChar, htmlDomData.digit, htmlDomData.extender ];
 	let i, j;
 	for (i = 0; i < validChars.length; i++)
 		for (j = 0; j < validChars[i].length; j++)
@@ -361,7 +400,7 @@ function extensiveNameCharCheck(theChar: string) {
  valid Name ::== (Letter | '_' | ':')(NameChar)*
 */
 
-function validDOMattribute (attributeName: string) {
+export function validDOMattribute (attributeName: string) {
 	const startPoint = attributeName;
 	let posn;
 	if (attributeName.search(/[A-Za-z0-9_:]/) !== 0) // 1st char test
@@ -373,7 +412,7 @@ function validDOMattribute (attributeName: string) {
 }
 
 
-function validDOMattributeValue (attributeValueName: string) {
+export function validDOMattributeValue (attributeValueName: string) {
 	const startPoint = attributeValueName;
 	let posn;
 	while ((posn = startPoint.search(/[A-Za-z0-9_:\-.]/)) > 0)
@@ -433,6 +472,7 @@ if (typeof document.createDocumentFragment !== "function") {
 			try {
 				return document.createDocumentFragment();
 			} catch (error) {
+				console.error(`Error: ${error}`);
 				return document.createElement("div");
 			}
 		},
@@ -463,7 +503,7 @@ function getArrayOfStrings(obj: any): string[] | string | null {
 }
 
 
-function placeMarkupHere(markup: string) { // by Martin Honnen
+export function placeMarkupHere(markup: string) { // by Martin Honnen
 	const ns = "http://www.w3.org/1999/xhtml";
 	try {
 		const scripts = document.getElementsByTagNameNS(ns, "script");
@@ -471,6 +511,7 @@ function placeMarkupHere(markup: string) { // by Martin Honnen
 		//lastScript.parentNode.appendChild(buildDocFrag._build(markup));
 		buildDocFrag._build(markup, lastScript.parentNode as Node, ns);
 	} catch (error) {
+		console.error(`Error: ${error}`);
 		const scripts = document.getElementsByTagName("script");
 		const lastScript = scripts[scripts.length - 1];
 		//lastScript.parentNode.appendChild(buildDocFrag._build(markup));
@@ -565,14 +606,14 @@ function walkDocFindNodes(contentTag, nodeType) {
 }
 */
 
-function innerHtmlAsString(
+export function innerHtmlAsString(
 	containingElem: HTMLElement,
 	htmlStringObj: { content: string; }
 ) {
 	// nodeType = 1 is an ELEMENT_NODE, = 11 is DOCUMENT_FRAGMENT_NODE
 	let i,
 		attr,
-		attrval,
+		//attrval,
 		node,
 		tagNameLowerCase,
 		firstLetter,
@@ -1043,17 +1084,18 @@ if ( typeof document.implementation == "undefined" ||
   My old HTML Parser
  *******************************************************************************/
 
-type Etago = {
+type HTMLElemEtago = {
+	elemObj: HTMLElement;
 	etago: boolean;
 	tag: string;
 	tagName: string;
 }
 
-const buildDocFrag = {
+export const buildDocFrag = {
 
 	isContentForbidden : (
-		containingElement: HTMLElement,
-		containedElement: HTMLElement,
+		containingElement: string,
+		containedElement: string,
 		isContainedByCalling: boolean
 	): boolean => {
 		// for any problems, content is forbidden (returns 'true')
@@ -1066,23 +1108,26 @@ const buildDocFrag = {
 				return true;
 		// get the array of elements that can be legally contained by elements starting with 1st letter
 		// containable elements will be: { a: [ string ], address: [ string ]}
-		const containableElements = htmlDomData.legalContainingElements[containingElement.nodeName.charAt(0)];
+		const containableElements = htmlDomData.legalContainingElements[containingElement.charAt(0)];
 		if (typeof containableElements === "undefined")
 			return (isContainedByCalling === true) ? false: true;
 		// now use the full node name to get the array of containable names
-		const elementsArray = containableElements[containingElement.nodeName];
+		const elementsArray = containableElements[containingElement];
 		if (elementsArray == null) // now get array of container's containing elements
 			return isContainedByCalling === true ? false: true;
-		let containableElementslist = []; // this empty array for naming containable elements
+		let containableElementslist: string[] = []; // this empty array for naming containable elements
 		for (const item of elementsArray)
-			containableElementslist = containableElements.concat(getArrayOfStrings(item));
-		for (const item of containableElements)
+			containableElementslist = containableElementslist.concat(getArrayOfStrings(item) as string[]);
+		for (const item of containableElementslist)
 			if (containedElement === item)
 				return (isContainedByCalling === true) ? true: false;
 		return (isContainedByCalling === true) ? false: true;
 	},
 
-	isContainedBy : function (containingElement: HTMLElement, containedElement: HTMLElement) {
+	isContainedBy : function (
+		containingElement: string, 
+		containedElement: string
+	) {
 		return this.isContentForbidden(containingElement, containedElement, true);
 	},
 
@@ -1119,7 +1164,7 @@ const buildDocFrag = {
 				return true;
 		if (option === 1)
 			return false;
-		for (const item of nonEtagoElements.length)
+		for (const item of nonEtagoElements)
 			if (elemStr === item)
 				return true;
 		return false;
@@ -1189,7 +1234,7 @@ const buildDocFrag = {
 
 	// constructor to create end tage
 	/*
-	Etago (tagName: string) {
+	HTMLElemEtago (tagName: string) {
 		if (typeof(tagName) != "string")
 			throw new Error ("etago object construction requires string-type argument");
 		const tagNameMatches = tagName.match(/<?\/?(\w+)>?/);
@@ -1226,6 +1271,7 @@ const buildDocFrag = {
 			if (elemNode.getAttribute(attribName) !== attribValue)
 				elemNode.setAttribute(attribName, attribValue);
 		} catch (exception) {
+			console.error(`Error: ${exception}`);
 			throw "\nunrecoverable error with elemNode[attribName] = attribValue;" +
 				"\nelemNode.toString()-> " + elemNode.toString() +
 				"\nattribName.toString()-> " + attribName.toString() +
@@ -1234,7 +1280,7 @@ const buildDocFrag = {
 		return true;
 	},
 
-	Etago : (tagName: string) => {
+	HTMLElemEtago : (tagName: string) => {
 		if (typeof tagName !== "string")
 			throw new Error("etago object construction requires string-type argument");
 		const tagNameMatches = tagName.match(/<?\/?(\w+)>?/);
@@ -1249,25 +1295,28 @@ const buildDocFrag = {
 
 	parseElementNode : function (
 		elementAsString: string,
-		namespace: string,
+		namespace?: string,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		doctype: any
+		doctype?: any
 	) {
 		const addElementAttribute = this.addElementAttribute,
-			tag = elementAsString.match(/\s*(\w+)\s*\/?>?/);
+			tag = elementAsString.match(/\s*(\w+)\s*\/?>?/)![1];
 		let elemNode: Element,
-			attribPair: string[],
-			attribValMatches: RegExpMatchArray | null;
+			attribPair: string[]
+			//attribValMatches: RegExpMatchArray | null
+			;
 
 		if (tag === null || this.verifyElem(tag[1]) === false)
-			return null;
-		if (doctype === "xhtml" && tag[0].search(/\s*\w+\s*\/>/) >= 0 && htmlDomData.isNonEtagoElement(tag[1]) === false)
 			return null;
 		if (namespace) {
 			if ((elemNode = document.createElementNS(namespace, tag[1])) === null)
 				return null;
 		} else if ((elemNode = document.createElement(tag[1])) === null)
 			return null;
+		if (doctype === "xhtml" && tag[0].search(/\s*\w+\s*\/>/) >= 0 && 
+					!htmlDomData.nonEtagoElements.includes(tag))
+			return null;
+
 		const attribsArray = elementAsString.match(/\w+="[^"]*"/g);
 		if (attribsArray)
 			for (const attribItem of attribsArray) {
@@ -1275,7 +1324,7 @@ const buildDocFrag = {
 					continue;
 				attribPair = attribItem.split("=");
 				attribPair[1] = attribPair[1].replace(/[\n\r\t\f]*/g, "");
-				if ((attribValMatches = attribPair[1].match(/^"(.*)"$/)) != null)
+				if ((/* attribValMatches = */ attribPair[1].match(/^"(.*)"$/)) != null)
 					attribPair[1] = attribPair[1][1];
 				if (attribPair.length == 2) {
 					//			if (this.isEventHandlerAttribute(attribPair[0]) === true)
@@ -1294,32 +1343,31 @@ const buildDocFrag = {
 		return elemNode;
 	},
 
-
-
 	_build: function (
 		markupString: string,
-		parentNode: Node,
-		namespace: string
+		parentNode?: Node,
+		namespace?: string
 	) {
 		// changed arg type check from != "string" to just being defined
 		const headElem: HTMLHeadElement = document.getElementsByTagName("head")[0], // in case needed for link,style
-			markupNodes: HTMLElement[] = [],   // array of DOM node objects representing HTML structure
-			elementStack: HTMLElement[] = [],  // push-pop array of DOM element objects for maintaining the DOM/HTML hierarchy
+			markupNodes: HTMLElemEtago[] = [],   // array of DOM node objects representing HTML structure
+			elementStack: HTMLElemEtago[] = [],  // push-pop array of DOM element objects for maintaining the DOM/HTML hierarchy
 			tokenizingStringStart = "@@##=",  // used to convert \r,\t,\n,\f characters to prevent processing
 			tokenizingStringEnd = "=!!",  // used for handling \r,\t,\n,\f characters for processing
 			charactersToTokenize = [
-				/\n/g, "n", "\n", /\t/g, "t", "\t",
-				/\r/g, "r", "\r", /\f/g, "f", "\f"
+				{re: /\n/g, $: "n", esc: "\n"}, 
+				{re: /\t/g, $: "t", esc: "\t"},
+				{re: /\r/g, $: "r", esc: "\r"}, 
+				{re: /\f/g, $: "f", esc: "\f"}
 			],
 			// regular expression to find HTML comments
 			HtmlCommentRE = /<![ \r\n\t]*(--([^-]|[\r\n]|-[^-])*--[ \r\n\t]*)>/g,
-			startTagREstring = "<\\w+>|^<\\w+\\s|<\\w+" + tokenizingStringStart + "[ntrf]" + tokenizingStringEnd,
-			XHTML = 0,
-			HTML = 1;  // CONSTANTS
+			startTagREstring = "<\\w+>|^<\\w+\\s|<\\w+" + tokenizingStringStart + "[ntrf]" + tokenizingStringEnd
+			// XHTML = 0,
+			// HTML = 1
+			;  // CONSTANTS
 
-		let i, j,  // generalized loop counter/index
-
-			currentMarkupNode: HTMLElement, // the DOM object being analyzed for placement
+		let currentMarkupNode: HTMLElemEtago, // the DOM object being analyzed for placement
 			currentMarkupNodeIndex: number,  // current position of the markupNodes array pointer
 			elementStackIndex: number, // current position of the elementStack array pointer
 			revisedMarkupString: string, // the edited parameter markupString where all whitespace
@@ -1328,28 +1376,29 @@ const buildDocFrag = {
 			//documentNode = null, // needed if script contains document.getElementBy..() method calls
 			markupElements: string[],   // array of strings representing HTLML element markup
 			markupElements2: string[] = [],  // used to concat strings
-			doctype: number,     //  indicates whether doctype is XHMTL or HTML
+			// doctype: number,     //  indicates whether doctype is XHMTL or HTML
 			doctypeString: string,  // the string used in Node creation with a namespace parameter
-			element: string,  // string representing the tag for HTML element
+			//element: string,  // string representing the tag for HTML element
 			currentParent: DocumentFragment,  // used for appendChild() method calls after determining valid children
 			stackElementTag: string,   // the string representing a currently manipulate HTML element
 			parentTag: string, //
 			nodeName: string, // container for tag of a node
-			node: HTMLElement,  // holder for a DOM object
+			node: Node,  // holder for a DOM object
 			currentParentNodeName: string, // container for tag of a parent node
 			styleString: string, // used in stylesheet processing
-			styleSheet: HTMLStyleElement,  // DOM node that is a style sheet
-			allContentText: boolean = false, // used to concat strings that may be part of large text node
-			scriptDocFrag: DocumentFragment; // document fragments returned from processing SCRIPT elements
+			//styleSheet: HTMLStyleElement,  // DOM node that is a style sheet
+			allContentText: boolean = false // used to concat strings that may be part of large text node
+			//scriptDocFrag: DocumentFragment
+			; // document fragments returned from processing SCRIPT elements
 
 		if (typeof markupString == "undefined")
 			return null;
 		//		if (typeof markupString != "string")
 		//  markupString = markupString.toString();
-		doctype = HTML;
+		//doctype = HTML;
 		doctypeString = "html";
 		if (namespace && namespace.search(/xhtml/) >= 0) {
-			doctype = XHTML;
+			//doctype = XHTML;
 			doctypeString = "xhtml";
 		}
 		if (typeof parentNode == "undefined")
@@ -1360,18 +1409,18 @@ const buildDocFrag = {
 
 		revisedMarkupString = markupString.replace(HtmlCommentRE, "");
 		// change all whitespace to tokens, and trim leading space
-		for (i = 0; i < charactersToTokenize.length; i += 3)
-			revisedMarkupString = revisedMarkupString.replace(charactersToTokenize[i],
-				tokenizingStringStart + charactersToTokenize[i + 1] + tokenizingStringEnd);
+		for (let i = 0; i < charactersToTokenize.length; i++)
+			revisedMarkupString = revisedMarkupString.replace(charactersToTokenize[i].re,
+				tokenizingStringStart + charactersToTokenize[i].$ + tokenizingStringEnd);
 		// split markup string to array of elements and containers
 		markupElements = revisedMarkupString.split(/</g);
 		// restore the '<' character
-		for (i = 1; i < markupElements.length; i++)
+		for (let i = 1; i < markupElements.length; i++)
 			markupElements[i] = "<" + markupElements[i];
 		// now split on '>' and restore
-		for (i = 1; i < markupElements.length; i++) {
+		for (let i = 1; i < markupElements.length; i++) {
 			const elementPair = markupElements[i].split(/>/g);
-			for (j = 0; j < elementPair.length - 1; j++)
+			for (let j = 0; j < elementPair.length - 1; j++)
 				elementPair[j] += ">";
 			markupElements2 = markupElements2.concat(elementPair);
 		}
@@ -1380,14 +1429,13 @@ const buildDocFrag = {
 
 		// inner function used by _build() only
 		const removeTokenizingStrings = (content: string) => {
-			let i,
-				token,
+			let token,
 				reObj;
 			if (content.search(tokenizingStringStart) >= 0) // saving time
-				for (i = 1; i < charactersToTokenize.length; i += 3) {
-					token = tokenizingStringStart + charactersToTokenize[i] + tokenizingStringEnd;
+				for (let i = 1; i < charactersToTokenize.length; i++) {
+					token = tokenizingStringStart + charactersToTokenize[i].re + tokenizingStringEnd;
 					reObj = new RegExp(token, "g");
-					content = content.replace(reObj, charactersToTokenize[i + 1]);
+					content = content.replace(reObj, charactersToTokenize[i].$);
 				}
 			return content;
 		};
@@ -1395,12 +1443,13 @@ const buildDocFrag = {
 		// this loop creates an array (markupNodes) of DOM objects based on identified
 		// tags in the order in which they are encountered
 		const startTagRE = new RegExp(startTagREstring);
-		for (i = 0, j = ""; i < markupElements.length; i++)
+		for (let i = 0, j = ""; i < markupElements.length; i++)
 			if (markupElements[i].search(/^<\/\w+>$/) == 0) { // etago
 				if (markupElements[i].search(/<\/script>/) == 0) {
 					j = removeTokenizingStrings(j);
 					if (j.search(/document\.getElements?By/) >= 0) {
-						for (node = parentNode as HTMLElement; node && node != null; node = node.parentNode as HTMLElement)
+						for (node = parentNode as HTMLElement; node && node != null; 
+									node = node.parentNode as HTMLElement)
 							;
 							// if (node == document)
 							//	break;
@@ -1414,18 +1463,18 @@ const buildDocFrag = {
 					//						convertAllCharEntityToUnicode(j)));
 					j = "";
 					allContentText = false;
-					markupNodes.push(this.Etago("script"));
+					markupNodes.push(this.HTMLElemEtago("script"));
 				} else if (allContentText == true) {
 					j += markupElements[i];  // should actually be a parsing error, according to spec
 				} else {
 					markupElements[i] = removeTokenizingStrings(markupElements[i]);
-					markupNodes.push(this.Etago(markupElements[i].substring(2)));
+					markupNodes.push(this.HTMLElemEtago(markupElements[i].substring(2)));
 				}
 			} else if (startTagRE.test(markupElements[i]) == true && allContentText == false) {
 				if (markupElements[i].search(/<script /) >= 0)
 					allContentText = true;
 				markupElements[i] = removeTokenizingStrings(markupElements[i]);
-				markupNodes.push(this.parseElementNode(markupElements[i], namespace, doctypeString) as HTMLElement);
+				markupNodes.push(this.parseElementNode(markupElements[i], namespace, doctypeString) as unknown as HTMLElemEtago);
 			} else if (allContentText == false) {
 				markupElements[i] = removeTokenizingStrings(markupElements[i]);
 				// we might need a whitespace converter at this line
@@ -1439,12 +1488,12 @@ const buildDocFrag = {
 		// done in this for loop below
 		currentParent = docFrag;
 		elementStackIndex = 0;
-		if ((i = parentNode) != null)
+	/*	if ((node = parentNode) != null)
 			do {
 				elementStackIndex = elementStack.unshift(
-					htmlDomData. i.nodeName.toLowerCase()
+					(htmlDomData as any)[node.nodeName.toLowerCase()]
 				);
-			}	while ((i = i.parentNode) != null && i != document.body && i.nodeType == 1);
+			}	while ((node = node.parentNode as Node) != null && node != document.body && node.nodeType == 1); */
 		for (currentMarkupNodeIndex = 0;
 			currentMarkupNodeIndex < markupNodes.length;
 			currentMarkupNodeIndex++) {
@@ -1459,9 +1508,9 @@ const buildDocFrag = {
 					" of the markupNodes array");
 			if (currentMarkupNode.etago) {
 				do {  // loop keeps popping to match the etago
-					stackElementTag = elementStack.pop();  // pop the element stack but keep the tag
+					stackElementTag = elementStack.pop()!.tag;  // pop the element stack but keep the tag
 					elementStackIndex--;   // adjust the elementStack pointer accordingly
-					currentParent = currentParent.parentNode;
+					currentParent = currentParent.parentNode as DocumentFragment;
 				} while (stackElementTag !== currentMarkupNode.tag &&
 						(this.isOptionalEndTagElement(stackElementTag) === true ||
 							this.isNonEtagoElement(stackElementTag) === true) && elementStackIndex > 0);
@@ -1487,10 +1536,10 @@ const buildDocFrag = {
 					  * if yes
 					    a) add the node to the element stack, and make it the current parent
 					*/
-			} else if (currentMarkupNode.nodeType === ELEMENT_NODE) {
+			} else if (currentMarkupNode.elemObj.nodeType === ELEMENT_NODE) {
 				// this is the start of an element!  it will be called 'found element' below
 				// the loop below determines how the found element relates to its parent node
-				nodeName = currentMarkupNode.nodeName.toLowerCase();
+				nodeName = currentMarkupNode.elemObj.nodeName.toLowerCase();
 				if (nodeName == "script") {
 				/**************
 	   			This code works
@@ -1500,9 +1549,9 @@ const buildDocFrag = {
 					document.body.appendChild(currentMarkupNode);
 	***************/
 					this.evaluateJavaScriptElementCode(
-						markupNodes[++currentMarkupNodeIndex].textContent as string, currentParent);
+						markupNodes[++currentMarkupNodeIndex].elemObj.textContent as string, currentParent);
 					currentMarkupNode = markupNodes[++currentMarkupNodeIndex];
-					if (!(currentMarkupNode as Etago).etago && currentMarkupNode.tag != "script")
+					if (!(currentMarkupNode as HTMLElemEtago).etago && currentMarkupNode.tag != "script")
 						throw new Error("SCRIPT element block:  Error in HTML coding\n" +
 								"'script' etago expected\nMarkup Node Index =" + currentMarkupNodeIndex);
 					continue;
@@ -1511,83 +1560,86 @@ const buildDocFrag = {
 					styleString = "";
 					do {
 						currentMarkupNode = markupNodes[++currentMarkupNodeIndex];
-						if (currentMarkupNode.nodeType == TEXT_NODE)
-							styleString += currentMarkupNode.data;
+						if (currentMarkupNode.elemObj.nodeType == TEXT_NODE)
+							styleString += currentMarkupNode.elemObj.textContent;
 					} while (typeof currentMarkupNode.etago == "undefined" &&
 										currentMarkupNode.tagName != "style");
-					styleString = styleString.replace(/\n/, "", "gm");
-					if ((styleSheet = createStyleSheet(styleString)) == null)
+					styleString = styleString.replace(/\n/gm, "");
+					
+					const iCSS = new iCss();
+
+					if (iCSS.createStyleSheet(document, styleString) == null)
 						throw new Error("Error in stylesheet creation during HTML parsing" +
 								"\nMarkup Node Index = " + currentMarkupNodeIndex);
 	//				headElem.appendChild(styleSheet);
 					continue;
 				} else if (nodeName == "link") { // process immediately
-					headElem.appendChild(currentMarkupNode);
+					headElem.appendChild(currentMarkupNode.elemObj);
 				} else {
 					currentParentNodeName = currentParent.nodeName.toLowerCase();
 					while (currentParent.nodeType === ELEMENT_NODE &&
 									this.isContainedBy(currentParentNodeName, nodeName) === false) {
 						// the current parent is forbidden from containing the found element
 						// i.e., the found element cannot be a child of the current parent
-						parentTag = elementStack[elementStackIndex - 1];
+						parentTag = elementStack[elementStackIndex - 1].tag;
 						if (this.isOptionalEndTagElement(parentTag) === true ||
 										this.isNonEtagoElement(parentTag) === true) {
 							// it is determined that the parent cannot contain the found element
 							// but the element stack can only be popped
 							elementStack.pop();
 							elementStackIndex--;
-							currentParent = currentParent.parentNode;
+							currentParent = currentParent.parentNode as DocumentFragment;
 							currentParentNodeName = currentParent.nodeName.toLowerCase();
 						} else { // parent end tag must be found and was not:  Error in HTML markup!
 							throw new Error("ELEMENT block:  Error in HTML coding\n" +
 								"'" + nodeName + "' can never be contained by '" + parentTag + "'");
 						}
 					}
-					currentParent.appendChild(currentMarkupNode);
+					currentParent.appendChild(currentMarkupNode.elemObj);
 				}
 				// the found element (and its created node) can be added to the parent now
 				// and it becomes the parent but only if it is an etago element
 				if (this.isNonEtagoElement(nodeName) === false) {
-					currentParent = currentMarkupNode;
-					elementStack.push(nodeName);
+					currentParent = currentMarkupNode.elemObj as unknown as DocumentFragment;
+					//elementStack.push(nodeName);
 					elementStackIndex++;
 				}
 				/* processsing block for markup identified as Text for a text node
 					markup is already a text node...append it to the current parent but only
 	   			if the parent can contain text!!
 				*/
-			} else if (currentMarkupNode.nodeType == TEXT_NODE && currentMarkupNode.data.length > 0)
-				currentParent.appendChild(currentMarkupNode);
+			} else if (currentMarkupNode.elemObj.nodeType == TEXT_NODE && currentMarkupNode.elemObj.textContent!.length > 0)
+				currentParent.appendChild(currentMarkupNode.elemObj);
 		}
 		if (parentNode != null)
 			return currentParent;
 		return docFrag;  // the tree has been created and is returned
 	},
 
-	/*
-	adjustOffsets : function (positionArray: any, offset: number) {
+	adjustOffsets : function (positionArray: number[], offset: number): number[] {
 		const newPositions = [];
-		let i;
-		for (i = 0; i < positionArray.length; i++)
+
+		for (let i = 0; i < positionArray.length; i++)
 			if (positionArray[i] >= offset)
 				newPositions.push(positionArray[i] - offset);
 		return newPositions;
-	},*/
+	},
 
-	evaluateJavaScriptElementCode : function (scriptTextContent: string, currentParent: DocumentFragment) {
-		this.scriptContextCurrentParent = currentParent;
+	evaluateJavaScriptElementCode : function (
+		scriptTextContent: string, 
+		currentParent: DocumentFragment
+	) {
+		this.scriptContextCurrentParent = currentParent || document.createDocumentFragment();
 		// first join all strings that are concatenated
 		const parsedText = [],
 			CODE = 0,
 			STRING = 1,
 			topLevelEval = eval,
-			anonFunctions = [],
+		//	anonFunctions = [],
 			namedFunctions = [],
 			commentRE = /\/\/[^\n\r]*[\n\r]|\/\*[^(*/)]*\*\/|\/\/.*$/g;
 
-		let i: number,
-			j: string | number,
-			b1: number,
+		let b1: number,
 			b2: number,
 			subArray: string[] = [],
 			nest: number = 0,
@@ -1597,9 +1649,9 @@ const buildDocFrag = {
 			startBraces: number[],
 			endBraces: number[],
 			patternPositions: number[],
-			count: unknown,
+			//count: unknown,
 			code: string,
-			namedFuncCode: string,
+		//	namedFuncCode: string,
 			globalLevelCode: string,
 			fragmentScriptText: string[],
 			processedText: string,
@@ -1616,7 +1668,7 @@ const buildDocFrag = {
 		scriptText = scriptText.replace(/([^\\])'/g, "$1'~!@#~@#!~");
 		fragmentScriptText = scriptText.split(/'~!@#/);
 		// this loops replaces the tokens in split strings with the single (') quote chars
-		for (i = 0; i < fragmentScriptText.length; i++) {
+		for (let i = 0; i < fragmentScriptText.length; i++) {
 			if (inQuote == false) {
 				fragmentScriptText[i] = fragmentScriptText[i].replace(/~@#!~/g, "'");
 				inQuote = true;
@@ -1629,7 +1681,7 @@ const buildDocFrag = {
 		// now loop through the array of strings and token the double quote (") chars
 		//	 then split those strings, then turn array of strings at 2nd level into
 		//	 array of strings at 1st level */
-		for (i = 0; i < fragmentScriptText.length; i++) {
+		for (let i = 0; i < fragmentScriptText.length; i++) {
 			processedText = fragmentScriptText[i].replace(/([^\\])""/g, "$1#@_!!_@#<!<!");
 			processedText = processedText.replace(/([^\\])"/g, "$1!_@#<!<!");
 			//		processedText = fragmentScriptText[i].replace(/([^\\])"/g, "$1\"~!@#~@#!~");
@@ -1639,7 +1691,7 @@ const buildDocFrag = {
 		// go through every array element and replace tokens with double quote chars
 		//	 create new array of objects (parsedText) and label strings as STRING
 		//	 and everything outside of quote chars as CODE */
-		for (i = 0, inQuote = false; i < fragmentScriptText.length; i++) {
+		for (let i = 0, inQuote = false; i < fragmentScriptText.length; i++) {
 			if (fragmentScriptText[i].search(/#@_!!_@#/) >= 0)
 				fragmentScriptText[i] = fragmentScriptText[i].replace(/#@_!!_@#/g, "\"\"");
 			else {
@@ -1655,7 +1707,7 @@ const buildDocFrag = {
 		}
 		// at this point, all fragments should be contained in quotes if strings
 		// or contained in non-quoted text if code (not-string) blocks
-		for (i = 0, j = ""; i < fragmentScriptText.length; i++)
+		for (let i = 0, j = ""; i < fragmentScriptText.length; i++)  {
 			if (j == "") {  // no active string now
 				// this block will take care of all fragments that have been contained in quotes
 				if (fragmentScriptText[i].charAt(0) == "'" || fragmentScriptText[i].charAt(0) == "\"") {
@@ -1674,8 +1726,9 @@ const buildDocFrag = {
 					j = "";  // process the end of the string
 				}
 			}
-		if (j != "")
-			parsedText.push( { text : fragmentScriptText[i - 1], type : STRING } );
+			if (j != "")
+				parsedText.push( { text : fragmentScriptText[i - 1], type : STRING } );
+		}
 
 		//loop through all parsedText CODE blocks and identify string patterns
 		//and process them in an inner loop
@@ -1711,7 +1764,7 @@ const buildDocFrag = {
 				}
 		}
 
-		for (i = 0, namedFuncCode = globalLevelCode = ""; i < parsedText.length; i++)
+		for (let i = 0, namedFuncCode = globalLevelCode = ""; i < parsedText.length; i++)
 			if (parsedText[i].type == CODE) {
 				code = parsedText[i].text;
 				endBraces = this.findMultiplePatternPositions(code, /\}/);
@@ -1729,7 +1782,7 @@ const buildDocFrag = {
 					}
 				}
 				patternPositions = this.findMultiplePatternPositions(code, / function /);
-				for (j = 0; j < patternPositions.length; j++) {
+				for (let j = 0; j < patternPositions.length; j++) {
 					// use a brace parsing algorithm to isolate the function block
 					for (b1 = 0; patternPositions[j] > startBraces[b1]; b1++)
 						; // find the starting brace
@@ -1740,20 +1793,20 @@ const buildDocFrag = {
 						namedFuncCode = code.slice(startFunc, endFunc + 1);
 						code = code.substring(0, startFunc - 1) + code.substring(endFunc + 1);
 						len = startBraces.length;
-						startBraces = adjustOffsets(startBraces, endFunc + 1 - startFunc);
+						startBraces = this.adjustOffsets(startBraces, endFunc + 1 - startFunc);
 						b1 -= len - startBraces.length;
 						len = endBraces.length;
-						endBraces = adjustOffsets(endBraces, endFunc + 1 - startFunc);
+						endBraces = this.adjustOffsets(endBraces, endFunc + 1 - startFunc);
 						b2 -= len - endBraces.length;
 						len = patternPositions.length;
-						patternPositions = adjustOffsets(patternPositions, endFunc + 1 - startFunc);
+						patternPositions = this.adjustOffsets(patternPositions, endFunc + 1 - startFunc);
 						j -= len - patternPositions.length;
 						namedFunctions.push(namedFuncCode.replace(/document.write/g,
 							"buildDocFrag.docWriteProcessor"));
 						namedFuncCode = "";
 					} else {
-						namedFuncCode = code.substr(startFunc);
-						code = code.substr(0, startFunc - 1);
+						namedFuncCode = code.substring(startFunc);
+						code = code.substring(0, startFunc - 1);
 					}
 				}
 				// replace document.write() calls with processing handler
@@ -1767,27 +1820,27 @@ const buildDocFrag = {
 		// Finally wrap all global level namedFuncCode into anonymous functions, and call them in
 		// document order
 		code = "";
-		for (i = 0; i < namedFunctions.length; i++) {
+		for (let i = 0; i < namedFunctions.length; i++) {
 			funcParts = namedFunctions[i].match(/function\s+(\w+)\s*\(\s*(\w+)\s*,+\s*(\w+)\s*\)\s*(\{.*\})/) as RegExpMatchArray;
 			code = "var " + funcParts[1] + " = new Function (";
-			for (j = 2; j < funcParts.length - 1; j++) {
+			for (let j = 2; j < funcParts.length - 1; j++) {
 				code += "\"" + funcParts[j] + "\"";
 				if (j < funcParts.length - 2)
 					code += ", ";
 			}
-			code += ", \"" + funcParts[j] + "\")";
+			code += ", \"" + funcParts[i] + "\")";
 			topLevelEval(code);
 		}
 		console.log("\nvalue of 'code':\n" + code +
 					"\n\nvalue of 'globalLevelCode':\n" + globalLevelCode);
 		topLevelEval(globalLevelCode);
 		if (this.documentWritesMarkup.length > 0) {
-			this._build(this.documentWritesMarkup, this.scriptContextCurrentParent);
+			this._build(this.documentWritesMarkup, this.scriptContextCurrentParent as unknown as Node);
 			this.documentWritesMarkup = "";
 		}
 	},
 
-	scriptContextCurrentParent : DocumentFragment,
+	scriptContextCurrentParent : new DocumentFragment,
 
 	documentWritesMarkup : "",
 

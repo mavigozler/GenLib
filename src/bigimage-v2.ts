@@ -13,6 +13,10 @@ to data or computing device, especially when used as intended.
 For instructions on how to use the interface, see the bottom of this script
 source.
 *****************************************************************************/
+
+import yaml from "js-yaml";
+// for browser, use following script tag:
+// <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 import {
 	CssValueDim,
 	MathOperation,
@@ -137,7 +141,7 @@ class HtmlImgControl {
 	//		imgElem.style.height = "auto"; // ✅ Maintain aspect ratio */
 			imgElem.style.display = "block"; // ✅ Ensures proper resizing */
 			imgElem.addEventListener("click", (evt: Event) => {
-				this.bigimage(evt.currentTarget as HTMLImageElement, true);
+				this.bigimage((evt.currentTarget as Node).cloneNode(true) as HTMLImageElement, true);
 			});
 			// imgStyle = getComputedStyle(imgElem);
 			imgParent = imgElem.parentNode as HTMLElement;
@@ -405,28 +409,28 @@ class HtmlImgControl {
 		imgObj: HTMLImageElement,
 		origRez: boolean
 	) {
-		let nameParts: RegExpMatchArray | null,
-			filename: string;
+//		let nameParts: RegExpMatchArray | null,
+//			filename: string;
 
 		if (origRez == null || typeof(origRez) == "undefined")
 			origRez = false;
-		if ((nameParts = imgObj.src.match(/(.*)\/thumbs(.*)-thumb(.*)/)) == null)
-			filename = imgObj.src;
-		else
-			filename = nameParts[1] + nameParts[2] + nameParts[3];
+//		if ((nameParts = imgObj.src.match(/(.*)\/thumbs(.*)-thumb(.*)/)) == null)
+//			filename = imgObj.src;
+//		else
+//			filename = nameParts[1] + nameParts[2] + nameParts[3];
 		if (origRez == true)
-			return (this.origImage(filename, imgObj.alt));
-		return (this.makeBigImage(filename, imgObj.alt));
+			return this.origImage(imgObj);
+		return this.makeBigImage(imgObj);
 	}
 
 	private origImage(
-		imgURL: string,
-		imageTitle: string
+		imgObj: HTMLImageElement
 	): void {
-		let origwin: Window | null;
+		let origwin: Window | null,
+			caption: string | null;
 
 		this.methodError = "";
-		if ((origwin = window.open(imgURL, "", "resizable=yes,scrollbars=yes")) == null) {
+		if ((origwin = window.open("", "", "resizable=yes,scrollbars=yes")) == null) {
 			this.methodError = "A child window could not be opened which is necessary. Incorrect URL?";
 			return;
 		}
@@ -435,7 +439,9 @@ class HtmlImgControl {
 		const headElem: HTMLHeadElement = doc.getElementsByTagName("head")[0];
 		const titleElem: HTMLTitleElement = doc.createElement("title");
 		headElem.appendChild(titleElem);
-		titleElem.appendChild(doc.createTextNode("Original Size: " + imageTitle));
+		if ((caption = imgObj.getAttribute("data-caption")) == null)
+			caption = imgObj.alt;
+		titleElem.appendChild(doc.createTextNode("Original Size: " + caption));
 		const metaElem: HTMLMetaElement = document.createElement("meta");
 		metaElem.setAttribute("html-equiv", "Content-Type");
 		metaElem.setAttribute("content", "text/html; charset=utf-8");
@@ -451,33 +457,35 @@ class HtmlImgControl {
 		divElem.style.textAlign = "center";
 		divElem.style.color = "white";
 		divElem.style.font = "bold 1em 'Courier New',Courier,monospace";
-		divElem.appendChild(doc.createTextNode(imageTitle));
+		divElem.appendChild(doc.createTextNode(caption));
 		divElem.appendChild(doc.createElement("br"));
 		const imgElem: HTMLImageElement = doc.createElement("img");
-		imgElem.src = imgURL;
-		imgElem.alt = "Big Goddam Image\n\nClick the right mouse button and select " +
+		imgElem.src = imgObj.src;
+		imgElem.setAttribute("data-caption", "Huge Image\n\nClick the right mouse button and select " +
 			"'Save Picture As...' to save this image to your hard disk\n" +
-			"\nURL=" + imgURL;
+			"\nURL=" + imgObj.src);
 		divElem.appendChild(imgElem);
 		bodyElem.appendChild(divElem);
 	}
 
 	// this is a support function for bigimage()
 	private	makeBigImage(
-		imgURL: string,
-		imageTitle: string
-	) {
+		imgObj: HTMLImageElement
+	): void {
 		const winResize: number = 1.25,
 			imgResize: number = 0.80;
 		let paraElem: HTMLParagraphElement,
 			doc: Document,
-			spanElem: HTMLSpanElement;
+			spanElem: HTMLSpanElement,
+			caption: string | null = imgObj.getAttribute("data-caption");
 
 		this.methodError = "";
-		if (typeof imgURL != "string" || imgURL.length == 0)
+		if (typeof imgObj.src != "string" || imgObj.src.length == 0)
 			this.methodError = "The argument for parameter 'imgURL' must be a string with a valid URL";
-		if (typeof imageTitle != "string" || imageTitle.length == 0)
-			imageTitle = "*** this image had no title ***";
+		if (caption == null || caption.length == 0) {
+			caption = "*** this image had no title ***";
+			imgObj.setAttribute("data-capture", caption);
+		}
 		this.imgWin = window.open("" /*window.location.href*/, "",
 			"resizable=no,scrollbars=no;,height=" +
 				screen.availHeight * 0.98 + ",width=" + screen.availWidth * 0.98);
@@ -489,7 +497,7 @@ class HtmlImgControl {
 		const headElem = doc.getElementsByTagName("head")[0];
 		const titleElem = doc.createElement("title");
 		headElem.appendChild(titleElem);
-		titleElem.appendChild(doc.createTextNode(imageTitle));
+		titleElem.appendChild(doc.createTextNode(caption));
 		const metaElem = doc.createElement("meta");
 		metaElem.setAttribute("html-equiv", "Content-Type");
 		metaElem.setAttribute("content", "text/html; charset=utf-8");
@@ -530,17 +538,17 @@ class HtmlImgControl {
 		paraElem.style.textAlign = "center";
 		paraElem.style.color = "white";
 		paraElem.style.font = "bold 1em 'Courier New',Courier,monospace";
-		paraElem.appendChild(doc.createTextNode(imageTitle));
+		paraElem.appendChild(doc.createTextNode(caption));
 
 		paraElem.appendChild(doc.createElement("br"));
 
 		const theImage = doc.createElement("img");
-		theImage.src = imgURL;
+		theImage.src = imgObj.src;
 		theImage.id = "the-Image";
-		theImage.alt = "Big Goddam Image\nClick the right mouse button and select " +
-			"'Save Picture As...' to save this image to your hard disk";
+		theImage.setAttribute("data-caption", "Huge Image\nClick the right mouse button and select " +
+			"'Save Picture As...' to save this image to your hard disk");
 		theImage.addEventListener("click", () => {
-			return this.origImage(imgURL, imageTitle);
+			return this.origImage(imgObj);
 		}, false);
 
 		paraElem.appendChild(theImage);
@@ -555,12 +563,12 @@ class HtmlImgControl {
 		));
 	}
 
-	readJsonConfig(jsonConfig: string): Promise<void> {
+	readJsonConfig(yamlConfig: string): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			fetch(jsonConfig)
-			.then(response => response.json())
+			fetch(yamlConfig)
+			.then(response => response.text())
 			.then(data => {
-				this.configInfo = data;
+				this.configInfo = yaml.load(data);
 				resolve();
 			}).catch(err => {
 				reject(err);
@@ -574,7 +582,7 @@ class HtmlImgControl {
 */
 document.addEventListener("DOMContentLoaded", () => {
 	const htmlImgControl: HtmlImgControl = new HtmlImgControl();
-	htmlImgControl.readJsonConfig("./js/bigImageConfig.json")
+	htmlImgControl.readJsonConfig("./js/bigImageConfig.yaml")
 	.then(() => {	// do something with the config data
 		htmlImgControl.setThumbedImages(document.body as HTMLBodyElement, true, true);	
 	}).catch(err => {	
@@ -787,15 +795,19 @@ where the '...' represent other attributes of the element.
 A typical 'img' tag in validated Strict HTML will look like this:
 
    <img src="path/to/myimage.jpg" onclick="bigimage(this);"
-     alt="The desired title of my image" class="thumbImage-0.4">
+     data-caption="The desired title of my image" class="thumbImage-0.4">
 
-Note that the 'alt' attribute is required for 'img' elements and its value
+Note that the 'data-caption' attribute is required for 'img' elements and its value
 will be used as a title for the image in the window containing the magnified
-images.  So fill in the 'alt' attribute properly or the text
+images.  So fill in the 'data-caption' attribute properly or the text
 
     *** this image had no title ***
 
 will appear.
+
+NOTE: in a prior version, the captioning was done using the image object's 'alt' attribute,
+but this has changed. Use the "data-caption" attribute instead.  The 'alt' attribute
+is still used for the image in the pop-up window, but it is not used for the captioning.
 
 2. Optionally--but strongly urged---it is useful to enclose the tag
 of reduced images within a DIV container that takes the image out of
@@ -808,7 +820,7 @@ For example:
     Click on image to obtain at original resolution in new window
     <br><img src="path/to/myimage.jpg" onclick="bigimage(this);"
        class="thumbImage-0.33"
-       alt="Nine-tenths of cells allowed to form colonies">
+       data-caption="Nine-tenths of cells allowed to form colonies">
     </div>
 
 Rather than using inline style attributes for every container, the

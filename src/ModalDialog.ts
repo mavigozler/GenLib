@@ -154,7 +154,7 @@ class ModalDialog {
 		testElement: string,
 		validElements: string[]
 	): boolean {
-		return validElements.find(elem => elem == testElement) != null ? true : false;
+		return !!validElements.find(elem => elem == testElement) != null;
 	}
 
 	buildItemContainer(spec: ContentContainerSpec): HTMLElement | null {

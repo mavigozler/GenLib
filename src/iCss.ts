@@ -37,7 +37,7 @@ class iCss {
 	private getFirstInternalStylesheet(
 		doc: Document,
 		createIfNull: boolean = false
-	): CSSStyleSheet | null {
+	): CSSStyleSheet | undefined {
 		let i: number,
 			href: string | null,
 			styleElem: HTMLStyleElement;
@@ -49,7 +49,7 @@ class iCss {
 		}
 		if (i == doc.styleSheets.length) {
 			if (createIfNull != true)
-				return null;
+				return;
 			styleElem = doc.createElement("style");
 			//	styleElem.type = "text/css";
 			doc.head.appendChild(styleElem);
@@ -72,7 +72,7 @@ class iCss {
 	createStyleSheet (
 		doc: Document,
 		urlOrRules: string | undefined
-	)  {
+	): CSSStyleSheet | undefined  {
 		const rulesRE = /([\w-]?[#.]?[\w-]+(\s+[\w\-*>]+)*)\s*\{([^}]+)\}/g,
 			ruleRE =  /(.*)\s*\{([^}]+)\}/,
 			rules = typeof urlOrRules == "string" ? urlOrRules.match(rulesRE) : undefined,
@@ -80,7 +80,7 @@ class iCss {
 
 		let i,
 			returnedValue,
-			styleSheet: CSSStyleSheet | null,
+			styleSheet: CSSStyleSheet | undefined,
 			linkElem: HTMLLinkElement,
 			styleElem: HTMLStyleElement,
 			rule;
@@ -166,6 +166,30 @@ class iCss {
 			j: number,
 			rule: CSSRule | null = null,
 			sheet: CSSStyleSheet | null;
+		const searchThisStyleSheet = (
+			selector: string,
+			sheet: CSSStyleSheet,
+			isIE: boolean
+		): CSSStyleRule | CSSRule | null  => {
+			let rule: CSSRule,
+				styleRule: CSSStyleRule;
+
+			if (isIE == true)
+				for (j = 0; j < sheet.cssRules.length; j++) {
+					rule = sheet.cssRules[j];
+					// Rule Types not defined in IE DOM
+					if ((styleRule = rule as CSSStyleRule) && styleRule.selectorText && styleRule.selectorText.toLowerCase() == selector.toLowerCase())
+						return styleRule;
+				}
+			else // standard CSS DOM
+				for (j = 0; j < sheet.cssRules.length; j++) {
+					rule = sheet.cssRules[j];
+					// Rule Type 1 is a Style Rule
+					if ((rule.type  == CSSRule.STYLE_RULE) && (rule.cssText.toLowerCase() == selector.toLowerCase()))
+						return rule;
+				}
+			return null;
+		}
 
 		if (typeof selector != "string")
 			throw "a selector parameter of type 'string' is required";
@@ -197,31 +221,6 @@ class iCss {
 					break;
 			}
 		return rule;
-
-		function searchThisStyleSheet(
-			selector: string,
-			sheet: CSSStyleSheet,
-			isIE: boolean
-		): CSSStyleRule | CSSRule | null {
-			let rule: CSSRule,
-				styleRule: CSSStyleRule;
-
-			if (isIE == true)
-				for (j = 0; j < sheet.cssRules.length; j++) {
-					rule = sheet.cssRules[j];
-					// Rule Types not defined in IE DOM
-					if ((styleRule = rule as CSSStyleRule) && styleRule.selectorText && styleRule.selectorText.toLowerCase() == selector.toLowerCase())
-						return styleRule;
-				}
-			else // standard CSS DOM
-				for (j = 0; j < sheet.cssRules.length; j++) {
-					rule = sheet.cssRules[j];
-					// Rule Type 1 is a Style Rule
-					if ((rule.type  == CSSRule.STYLE_RULE) && (rule.cssText.toLowerCase() == selector.toLowerCase()))
-						return rule;
-				}
-			return null;
-		}
 	}
 	/**
 	 * setCssRule() returns a CSS rule from inspecting one or all style sheets
@@ -856,7 +855,7 @@ class iCss {
 	}
 
 	getEffectiveElementWidth(element: HTMLElement): number {
-		const parentElement = element.parentElement;
+		const { parentElement } = element;
 		let parentComputedStyle: CSSStyleDeclaration,
 			elementComputedStyle: CSSStyleDeclaration,
 			elementWidth: number,

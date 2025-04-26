@@ -1,6 +1,6 @@
 "use strict";
 
-export { areEqual, numberWithThousandsSeparator, getRandom,
+export { areEqual, numberWithThousandsSeparator, getRandom, numbersAreEqual,
 	getRandomIntegerInRange, getFactor, isValidFloat, getLowerRoman
 };
 
@@ -90,6 +90,9 @@ function getLowerRoman(num: number): string {
 	return romStr;
 }
 
+function numbersAreEqual(a: number, b: number): boolean {
+	return Math.abs(a - b) < Number.EPSILON;
+ }
 
 function isValidFloat(numAsString: string): boolean {
 	return /^[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?$/.test(numAsString);

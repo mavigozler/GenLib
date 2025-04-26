@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import { Document, Packer, Paragraph, TextRun } from "docx";
 
-function createDocx() {
+export function createDocx() {
 	const titleBlock: Paragraph = new Paragraph({
 		children: [
 			new TextRun({
